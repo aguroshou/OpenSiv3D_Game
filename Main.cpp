@@ -29,17 +29,28 @@ void Main()
 	constexpr double playerAnimalRadius = 20;
 
 	Array<P2Body> playerAnimals;
+	HashSet<P2BodyID> playerAnimalIDs;
+	for (int32 index = 0; index < 5; ++index)
 	{
-		for (int32 x = 0; x < 5; ++x)
-		{
-			playerAnimals << world.createCircle(P2Dynamic, Vec2{ 100 + x * 50, 100 }, playerAnimalRadius,
-				P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-		}
+		playerAnimals << world.createCircle(P2Dynamic, Vec2{ 100 + index * 50, 100 }, playerAnimalRadius,
+			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+		playerAnimalIDs.emplace(playerAnimals[index].id());
 	}
 	bool isPlayerAnimalGrab = false;
 
 	int32 grabAnimalIndex = 0;
 	bool isGrabbing = false;
+
+	constexpr double enemyAnimalRadius = 20;
+	Array<P2Body> enemyAnimals;
+	HashSet<P2BodyID> enemyAnimalIDs;
+	for (int32 index = 0; index < 5; ++index)
+	{
+		enemyAnimals << world.createCircle(P2Dynamic, Vec2{ 300 + index * 50, 500 }, enemyAnimalRadius,
+			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+		enemyAnimalIDs.emplace(enemyAnimals[index].id());
+	}
+
 
 	// 基本サイズ 50 のフォントを作成
 	const Font font{ 50 };
@@ -48,6 +59,11 @@ void Main()
 	// そのため、カメラの座標・ズームなどを変更してしまうと不具合が発生してしまいます。
 	Camera2D camera{ Vec2{ 640, 360 }, 1.0, CameraControl::None_ };
 	Array<P2Body> bodies;
+
+	// タイマーを初期化
+	Stopwatch timer;
+	timer.start();
+	int32 score = 0;
 
 	while (System::Update())
 	{
@@ -87,6 +103,41 @@ void Main()
 			}
 		}
 
+		//for (const auto& playerAnimal : playerAnimals)
+		//{
+		//	for (const auto& enemyAnimal : enemyAnimals)
+		//	{
+		//		playerAnimal.
+		//	}
+		//}
+		// ボールと接触しているボディの ID を格納
+		for (auto&& [pair, collision] : world.getCollisions())
+		{
+			if (playerAnimalIDs.contains(pair.a) && enemyAnimalIDs.contains(pair.b))
+			{
+				Print << pair.a << U" vs " << pair.b;
+			}
+			else if (playerAnimalIDs.contains(pair.b) && enemyAnimalIDs.contains(pair.a))
+			{
+				Print << pair.a << U" vs " << pair.b;
+			}
+
+			//if (pair.a == ballID)
+			//{
+			//	collidedIDs.emplace(pair.b);
+			//}
+			//else if (pair.b == ballID)
+			//{
+			//	collidedIDs.emplace(pair.a);
+			//}
+		}
+
+		if (timer.sF() >= 1.0)
+		{
+			score++;
+			timer.restart();
+		}
+
 		////////////////////////////////
 		//
 		//	状態更新
@@ -110,7 +161,12 @@ void Main()
 
 		for (const auto& playerAnimal : playerAnimals)
 		{
-			playerAnimal.draw(ColorF{ 0.6, 0.2, 0.0 })
+			playerAnimal.draw(ColorF{ 1, 1, 1 })
+				.drawFrame(2); // 輪郭
+		}
+		for (const auto& enemyAnimal : enemyAnimals)
+		{
+			enemyAnimal.draw(ColorF{ 0, 0, 0 })
 				.drawFrame(2); // 輪郭
 		}
 
@@ -119,8 +175,7 @@ void Main()
 			wall.draw(ColorF{ 0.0, 0.0, 0.0 });
 		}
 
-		int32 tmp = 1;
 		// 左上位置 (20, 20) からテキストを描く
-		font(U"LIFE:{}/SCORE:{}/TIME:{}"_fmt(tmp, 12, 31)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
+		font(U"LIFE:{}/SCORE:{}"_fmt(0, score)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
 	}
 }
