@@ -35,7 +35,7 @@ Game::Game(const InitData& init)
 		items << world.createCircle(P2Dynamic, Vec2{ 500 + index * 50, 600 }, itemRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 		itemIDs.push_back(items[index].id());
-	}	
+	}
 
 	for (int32 index = 0; index < 5; ++index)
 	{
@@ -161,76 +161,178 @@ void Game::update()
 	// ボールと接触しているボディの ID を格納
 	for (auto&& [pair, collision] : world.getCollisions())
 	{
-		// FIXME: ほぼ同じ2つの処理を関数にまとめる
-		if (playerAnimalIDs.contains(pair.a) && enemyAnimalIDs.contains(pair.b))
+		P2Body* pA;
+		BodyType aType = BodyType::DEFAULT;
+		pA = findBodyAndSetBodyTypeFromID(pair.a, aType);
+
+		P2Body* pB;
+		BodyType bType = BodyType::DEFAULT;
+		pB = findBodyAndSetBodyTypeFromID(pair.b, bType);
+
+		if ((aType == BodyType::PLAYER && bType == BodyType::ENEMY) ||
+			(aType == BodyType::ENEMY && bType == BodyType::PLAYER))
 		{
-			//Print << pair.a << U" vs " << pair.b;
 			// ランキング画面へ
 			changeScene(State::Ranking);
 			getData().lastGameScore = score;
 		}
-		else if (playerAnimalIDs.contains(pair.b) && enemyAnimalIDs.contains(pair.a))
+		else if ((aType == BodyType::PLAYER && bType == BodyType::ITEM) ||
+			(aType == BodyType::ITEM && bType == BodyType::PLAYER))
 		{
-			//Print << pair.a << U" vs " << pair.b;
-			// ランキング画面へ
-			changeScene(State::Ranking);
-			getData().lastGameScore = score;
-		}
-		else if (enemyAnimalIDs.contains(pair.a) && enemyAnimalIDs.contains(pair.b))
-		{
-			//Print << pair.a << U" vs " << pair.b;
-			// FIXME: プログラムの整理
-			//int32 aIndex = 0, bIndex = 0;
-			//for (int32 i = 0; i < enemyAnimalIDs.size(); i++)
+			if (aType == BodyType::ITEM)
+			{
+				P2Body* pTmpBody = pA;
+				pA = pB;
+				pB = pTmpBody;
+			}
+			//FIXME: P2Bodyの削除は、release関数を呼ぶだけで良いのか分かっていません。
+			pA->release();
+			pB->release();
+			//playerAnimals.remove_if([](const P2Body& body) { return (aType == body.id()); });
+			//playerAnimals.remove();
+			//items.remove(reinterpret_cast<P2Body&>(*pB));
+
+			//playerAnimals.remove(reinterpret_cast<P2Body&>(*pA));
+			//items.remove(reinterpret_cast<P2Body&>(*pB));
+
+
+			//P2BodyID playerID = pair.a;
+			//P2BodyID itemID = pair.b;
+			//if (playerAnimalIDs.contains(pair.b))
 			//{
-			//	if (enemyAnimalIDs[i] == pair.a)
+			//	P2BodyID playerID = pair.b;
+			//	P2BodyID itemID = pair.a;
+			//}
+
+			//int32 playerIndex = 0, itemIndex = 0;
+			//for (int32 i = 0; i < playerAnimalIDs.size(); i++)
+			//{
+			//	if (playerAnimalIDs[i] == playerID)
 			//	{
-			//		aIndex = i;
-			//	}
-			//	if (enemyAnimalIDs[i] == pair.b)
-			//	{
-			//		bIndex = i;
+			//		playerIndex = i;
 			//	}
 			//}
-		}
-		if ((playerAnimalIDs.contains(pair.a) && itemIDs.contains(pair.b)) ||
-			(playerAnimalIDs.contains(pair.b) && itemIDs.contains(pair.a)))
-		{
-			P2BodyID playerID = pair.a;
-			P2BodyID itemID = pair.b;
-			if (playerAnimalIDs.contains(pair.b))
-			{
-				P2BodyID playerID = pair.b;
-				P2BodyID itemID = pair.a;
-			}
+			//playerAnimals.remove_at(playerIndex);
+			//playerAnimalIDs.remove_at(playerIndex);
+			//Print << playerIndex;
 
-			int32 playerIndex = 0, itemIndex = 0;
-			for (int32 i = 0; i < playerAnimalIDs.size(); i++)
-			{
-				if (playerAnimalIDs[i] == playerID)
-				{
-					playerIndex = i;
-				}
-			}
-			playerAnimals.remove_at(playerIndex);
-			playerAnimalIDs.remove_at(playerIndex);
-			Print << playerIndex;
+			//for (int32 i = 0; i < itemIDs.size(); i++)
+			//{
+			//	if (itemIDs[i] == itemID)
+			//	{
+			//		itemIndex = i;
+			//	}
+			//}
+			//items.remove_at(itemIndex);
+			//itemIDs.remove_at(itemIndex);
 
-			for (int32 i = 0; i < itemIDs.size(); i++)
-			{
-				if (itemIDs[i] == itemID)
-				{
-					itemIndex = i;
-				}
-			}
-			items.remove_at(itemIndex);
-			itemIDs.remove_at(itemIndex);
-
-			Print << itemIndex;
+			//Print << itemIndex;
 
 			score += 100;
 		}
 	}
+
+
+	// FIXME: IDからP2Bodyを取得する処理が、分かりづらいプログラムとなっています。改善できるか調べる必要があります。
+
+
+
+	//pA = findPlayerFromID(pair.a);
+
+	//pA = findBodyFromID(pair.a, playerAnimals);
+	//if (pA != NULL)
+	//{
+	//	aType = BodyType::PLAYER;
+	//}
+
+	//pA = findBodyFromID(pair.a, enemyAnimals);
+	//if (pA != NULL)
+	//{
+	//	aType = BodyType::ENEMY;
+	//}
+	//else
+	//{
+	//	pA = findBodyFromID(pair.a, items);
+	//	if (pA != NULL)
+	//	{
+	//		aType = BodyType::ITEM;
+	//	}
+	//}
+
+
+
+
+
+	//// FIXME: ほぼ同じ2つの処理を関数にまとめる
+	//if (playerAnimalIDs.contains(pair.a) && enemyAnimalIDs.contains(pair.b))
+	//{
+	//	//Print << pair.a << U" vs " << pair.b;
+	//	// ランキング画面へ
+	//	changeScene(State::Ranking);
+	//	getData().lastGameScore = score;
+	//}
+	//else if (playerAnimalIDs.contains(pair.b) && enemyAnimalIDs.contains(pair.a))
+	//{
+	//	//Print << pair.a << U" vs " << pair.b;
+	//	// ランキング画面へ
+	//	changeScene(State::Ranking);
+	//	getData().lastGameScore = score;
+	//}
+	//else if (enemyAnimalIDs.contains(pair.a) && enemyAnimalIDs.contains(pair.b))
+	//{
+	//	//Print << pair.a << U" vs " << pair.b;
+	//	// FIXME: プログラムの整理
+	//	//int32 aIndex = 0, bIndex = 0;
+	//	//for (int32 i = 0; i < enemyAnimalIDs.size(); i++)
+	//	//{
+	//	//	if (enemyAnimalIDs[i] == pair.a)
+	//	//	{
+	//	//		aIndex = i;
+	//	//	}
+	//	//	if (enemyAnimalIDs[i] == pair.b)
+	//	//	{
+	//	//		bIndex = i;
+	//	//	}
+	//	//}
+	//}
+	//if ((playerAnimalIDs.contains(pair.a) && itemIDs.contains(pair.b)) ||
+	//	(playerAnimalIDs.contains(pair.b) && itemIDs.contains(pair.a)))
+	//{
+	//	P2BodyID playerID = pair.a;
+	//	P2BodyID itemID = pair.b;
+	//	if (playerAnimalIDs.contains(pair.b))
+	//	{
+	//		P2BodyID playerID = pair.b;
+	//		P2BodyID itemID = pair.a;
+	//	}
+
+	//	int32 playerIndex = 0, itemIndex = 0;
+	//	for (int32 i = 0; i < playerAnimalIDs.size(); i++)
+	//	{
+	//		if (playerAnimalIDs[i] == playerID)
+	//		{
+	//			playerIndex = i;
+	//		}
+	//	}
+	//	playerAnimals.remove_at(playerIndex);
+	//	playerAnimalIDs.remove_at(playerIndex);
+	//	Print << playerIndex;
+
+	//	for (int32 i = 0; i < itemIDs.size(); i++)
+	//	{
+	//		if (itemIDs[i] == itemID)
+	//		{
+	//			itemIndex = i;
+	//		}
+	//	}
+	//	items.remove_at(itemIndex);
+	//	itemIDs.remove_at(itemIndex);
+
+	//	Print << itemIndex;
+
+		//score += 100;
+	//}
+//}
 
 	if (oneSecondScoreTimer.sF() >= 1.0)
 	{
@@ -321,7 +423,7 @@ P2Body* Game::findPlayerFromID(P2BodyID id)
 			return &(*playerAnimalIt);
 		}
 	}
-	return &(*playerAnimals.end());
+	return NULL;
 }
 
 P2Body* Game::findEnemyFromID(P2BodyID id)
@@ -333,7 +435,7 @@ P2Body* Game::findEnemyFromID(P2BodyID id)
 			return &(*enemyAnimalIt);
 		}
 	}
-	return &(*enemyAnimals.end());
+	return NULL;
 }
 
 P2Body* Game::findItemFromID(P2BodyID id)
@@ -345,5 +447,45 @@ P2Body* Game::findItemFromID(P2BodyID id)
 			return &(*itemIt);
 		}
 	}
-	return &(*items.end());
+	return NULL;
+}
+
+P2Body* Game::findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList)
+{
+	for (Array<P2Body>::const_iterator it = bodyList.begin(); it < bodyList.end(); it++)
+	{
+		if (it->id() == id)
+		{
+			//return &(*it);
+			return const_cast<P2Body*>(&(*it));  // constポインタを返す
+		}
+	}
+	return NULL;
+}
+
+P2Body* Game::findBodyAndSetBodyTypeFromID(P2BodyID id, BodyType& type)
+{
+	P2Body* pA = findBodyFromID(id, playerAnimals);
+	if (pA != NULL)
+	{
+		type = BodyType::PLAYER;
+		return pA;
+	}
+
+	pA = findBodyFromID(id, enemyAnimals);
+	if (pA != NULL)
+	{
+		type = BodyType::ENEMY;
+		return pA;
+	}
+
+	pA = findBodyFromID(id, items);
+	if (pA != NULL)
+	{
+		type = BodyType::ITEM;
+		return pA;
+	}
+
+	type = BodyType::DEFAULT;
+	return NULL;
 }
