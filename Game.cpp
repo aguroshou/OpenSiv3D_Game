@@ -1,5 +1,7 @@
 ﻿# include "Game.hpp"
 
+
+
 Game::Game(const InitData& init)
 	: IScene{ init }
 {
@@ -9,8 +11,6 @@ Game::Game(const InitData& init)
 	//	m_bricks << Rect{ (p.x * BrickSize.x), (60 + p.y * BrickSize.y), BrickSize };
 	//}
 
-
-	// 追加
 
 	// 背景色を設定する
 	Scene::SetBackground(ColorF{ 0.4, 0.7, 1.0 });
@@ -27,90 +27,59 @@ Game::Game(const InitData& init)
 	{
 		playerAnimals << world.createCircle(P2Dynamic, Vec2{ 100 + index * 50, 100 }, playerAnimalRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-		playerAnimalIDs.emplace(playerAnimals[index].id());
+		playerAnimalIDs.push_back(playerAnimals[index].id());
 	}
+
+	for (int32 index = 0; index < 5; ++index)
+	{
+		items << world.createCircle(P2Dynamic, Vec2{ 500 + index * 50, 600 }, itemRadius,
+			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+		itemIDs.push_back(items[index].id());
+	}	
 
 	for (int32 index = 0; index < 5; ++index)
 	{
 		enemyAnimals << world.createCircle(P2Dynamic, Vec2{ 300 + index * 50, 500 }, enemyAnimalRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-		enemyAnimalIDs.emplace(enemyAnimals[index].id());
+		enemyAnimalIDs.push_back(enemyAnimals[index].id());
 	}
 
-	timer.start();
-
-
-
-
+	oneSecondScoreTimer.start();
+	gameTimer.start();
 
 }
 
 void Game::update()
 {
-	//// ボールを移動
-	//m_ball.moveBy(m_ballVelocity * Scene::DeltaTime());
+	for (int32 spawnPlayerTime : spawnPlayerTimes)
+	{
+		if (spawnPlayerTime <= gameTimer.s())
+		{
+			spawnPlayerTimes.erase(std::remove(spawnPlayerTimes.begin(), spawnPlayerTimes.end(), spawnPlayerTime), spawnPlayerTimes.end());
+			playerAnimals << world.createCircle(P2Dynamic, Vec2{ 100, 100 }, playerAnimalRadius,
+			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+			// FIXME: ↓あとで修正する必要があります…。
+			playerAnimalIDs.push_back(playerAnimals[playerAnimals.size() - 1].id());
+		}
+	}
 
-	//// ブロックを順にチェック
-	//for (auto it = m_bricks.begin(); it != m_bricks.end(); ++it)
-	//{
-	//	// ブロックとボールが交差していたら
-	//	if (it->intersects(m_ball))
-	//	{
-	//		// ボールの向きを反転する
-	//		(it->bottom().intersects(m_ball) || it->top().intersects(m_ball)
-	//			? m_ballVelocity.y : m_ballVelocity.x) *= -1;
-
-	//		// ブロックを配列から削除（イテレータが無効になるので注意）
-	//		m_bricks.erase(it);
-
-	//		AudioAsset(U"Brick").playOneShot(0.5);
-
-	//		// スコアを加算
-	//		++m_score;
-
-	//		// これ以上チェックしない
-	//		break;
-	//	}
-	//}
-
-	//// 天井にぶつかったらはね返る
-	//if (m_ball.y < 0 && m_ballVelocity.y < 0)
-	//{
-	//	m_ballVelocity.y *= -1;
-	//}
-
-	//// 左右の壁にぶつかったらはね返る
-	//if ((m_ball.x < 0 && m_ballVelocity.x < 0)
-	//	|| (Scene::Width() < m_ball.x && 0 < m_ballVelocity.x))
-	//{
-	//	m_ballVelocity.x *= -1;
-	//}
-
-	//// パドルにあたったらはね返る
-	//if (const Rect paddle = getPaddle();
-	//	(0 < m_ballVelocity.y) && paddle.intersects(m_ball))
-	//{
-	//	// パドルの中心からの距離に応じてはね返る方向を変える
-	//	m_ballVelocity = Vec2{ (m_ball.x - paddle.center().x) * 10, -m_ballVelocity.y }.setLength(Speed);
-	//}
-
-	//// 画面外に出るか、ブロックが無くなったら
-	//if ((Scene::Height() < m_ball.y) || m_bricks.isEmpty())
-	//{
-	//	// ランキング画面へ
-	//	changeScene(State::Ranking);
-
-	//	getData().lastGameScore = m_score;
-	//}
-
-
-	// 追加
+	for (int32 spawnEnemyTime : spawnEnemyTimes)
+	{
+		if (spawnEnemyTime <= gameTimer.s())
+		{
+			spawnEnemyTimes.erase(std::remove(spawnEnemyTimes.begin(), spawnEnemyTimes.end(), spawnEnemyTime), spawnEnemyTimes.end());
+			enemyAnimals << world.createCircle(P2Dynamic, Vec2{ 300, 500 }, enemyAnimalRadius,
+			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+			// FIXME: ↓あとで修正する必要があります…。
+			enemyAnimalIDs.push_back(enemyAnimals[enemyAnimals.size() - 1].id());
+		}
+	}
 
 
 	if (MouseL.down())
 	{
 		double minAnimalToCursorDistance = 100000;
-		for (int index = 0; index < playerAnimals.size(); index++)
+		for (int32 index = 0; index < playerAnimals.size(); index++)
 		{
 			double animalToCursorDistance = playerAnimals[index].getPos().distanceFrom(Cursor::PosF());
 			if (animalToCursorDistance < 100 && animalToCursorDistance < minAnimalToCursorDistance)
@@ -133,9 +102,9 @@ void Game::update()
 	// プレイヤーの動物をドラッグアンドドロップできるときに、マウスカーソルを手のアイコンにする
 	if (!isGrabbing)
 	{
-		for (int index = 0; index < playerAnimals.size(); index++)
+		for (const auto& playerAnimal : playerAnimals)
 		{
-			double animalToCursorDistance = playerAnimals[index].getPos().distanceFrom(Cursor::PosF());
+			double animalToCursorDistance = playerAnimal.getPos().distanceFrom(Cursor::PosF());
 			if (animalToCursorDistance < 100)
 			{
 				Cursor::RequestStyle(CursorStyle::Hand);
@@ -143,39 +112,130 @@ void Game::update()
 		}
 	}
 
-	//for (const auto& playerAnimal : playerAnimals)
+	// 敵の動物から一番近いプレイヤーの動物の方向へ近づけます。
+	//for (int32 enemyIndex = 0; enemyIndex < enemyAnimals.size(); enemyIndex++)
 	//{
-	//	for (const auto& enemyAnimal : enemyAnimals)
+	//	int32 minDistancePlayerIndex = 0;
+	//	double minEnemyToPlayerDistance = 100000;
+	//	for (int32 playerIndex = 0; playerIndex < playerAnimals.size(); playerIndex++)
 	//	{
-	//		playerAnimal.
+	//		double enemyToPlayerDistance = enemyAnimals[enemyIndex].getPos().distanceFrom(playerAnimals[playerIndex].getPos());
+	//		if (enemyToPlayerDistance < minEnemyToPlayerDistance)
+	//		{
+	//			minEnemyToPlayerDistance = enemyToPlayerDistance;
+	//			minDistancePlayerIndex = playerIndex;
+	//		}
 	//	}
+	//	const Vec2 direction = playerAnimals[minDistancePlayerIndex].getPos() - enemyAnimals[enemyIndex].getPos();		
+	//	const Vec2 speed = 10 * direction.normalized();
+	//	enemyAnimals[enemyIndex].setVelocity(speed);
 	//}
+
+	// プレイヤーから一番近い敵を近づけます。追う・追われる対象が1対1の関係となります。
+	std::vector<bool> isTargetDecideds(enemyAnimals.size(), false);
+	for (int32 playerIndex = 0; playerIndex < playerAnimals.size(); playerIndex++)
+	{
+		int32 minDistanceEnemyIndex = 0;
+		double minEnemyToPlayerDistance = 100000;
+		for (int32 enemyIndex = 0; enemyIndex < enemyAnimals.size(); enemyIndex++)
+		{
+			if (isTargetDecideds[enemyIndex])
+			{
+				continue;
+			}
+			double enemyToPlayerDistance = enemyAnimals[enemyIndex].getPos().distanceFrom(playerAnimals[playerIndex].getPos());
+			if (enemyToPlayerDistance < minEnemyToPlayerDistance)
+			{
+				minEnemyToPlayerDistance = enemyToPlayerDistance;
+				minDistanceEnemyIndex = enemyIndex;
+				//Print << minDistanceEnemyIndex;
+			}
+		}
+		isTargetDecideds[minDistanceEnemyIndex] = true;
+
+		const Vec2 direction = playerAnimals[playerIndex].getPos() - enemyAnimals[minDistanceEnemyIndex].getPos();
+		const Vec2 speed = 10 * direction.normalized();
+		enemyAnimals[minDistanceEnemyIndex].setVelocity(speed);
+	}
+
 	// ボールと接触しているボディの ID を格納
 	for (auto&& [pair, collision] : world.getCollisions())
 	{
+		// FIXME: ほぼ同じ2つの処理を関数にまとめる
 		if (playerAnimalIDs.contains(pair.a) && enemyAnimalIDs.contains(pair.b))
 		{
-			Print << pair.a << U" vs " << pair.b;
+			//Print << pair.a << U" vs " << pair.b;
+			// ランキング画面へ
+			changeScene(State::Ranking);
+			getData().lastGameScore = score;
 		}
 		else if (playerAnimalIDs.contains(pair.b) && enemyAnimalIDs.contains(pair.a))
 		{
-			Print << pair.a << U" vs " << pair.b;
+			//Print << pair.a << U" vs " << pair.b;
+			// ランキング画面へ
+			changeScene(State::Ranking);
+			getData().lastGameScore = score;
 		}
+		else if (enemyAnimalIDs.contains(pair.a) && enemyAnimalIDs.contains(pair.b))
+		{
+			//Print << pair.a << U" vs " << pair.b;
+			// FIXME: プログラムの整理
+			//int32 aIndex = 0, bIndex = 0;
+			//for (int32 i = 0; i < enemyAnimalIDs.size(); i++)
+			//{
+			//	if (enemyAnimalIDs[i] == pair.a)
+			//	{
+			//		aIndex = i;
+			//	}
+			//	if (enemyAnimalIDs[i] == pair.b)
+			//	{
+			//		bIndex = i;
+			//	}
+			//}
+		}
+		if ((playerAnimalIDs.contains(pair.a) && itemIDs.contains(pair.b)) ||
+			(playerAnimalIDs.contains(pair.b) && itemIDs.contains(pair.a)))
+		{
+			P2BodyID playerID = pair.a;
+			P2BodyID itemID = pair.b;
+			if (playerAnimalIDs.contains(pair.b))
+			{
+				P2BodyID playerID = pair.b;
+				P2BodyID itemID = pair.a;
+			}
 
-		//if (pair.a == ballID)
-		//{
-		//	collidedIDs.emplace(pair.b);
-		//}
-		//else if (pair.b == ballID)
-		//{
-		//	collidedIDs.emplace(pair.a);
-		//}
+			int32 playerIndex = 0, itemIndex = 0;
+			for (int32 i = 0; i < playerAnimalIDs.size(); i++)
+			{
+				if (playerAnimalIDs[i] == playerID)
+				{
+					playerIndex = i;
+				}
+			}
+			playerAnimals.remove_at(playerIndex);
+			playerAnimalIDs.remove_at(playerIndex);
+			Print << playerIndex;
+
+			for (int32 i = 0; i < itemIDs.size(); i++)
+			{
+				if (itemIDs[i] == itemID)
+				{
+					itemIndex = i;
+				}
+			}
+			items.remove_at(itemIndex);
+			itemIDs.remove_at(itemIndex);
+
+			Print << itemIndex;
+
+			score += 100;
+		}
 	}
 
-	if (timer.sF() >= 1.0)
+	if (oneSecondScoreTimer.sF() >= 1.0)
 	{
 		score++;
-		timer.restart();
+		oneSecondScoreTimer.restart();
 	}
 
 	////////////////////////////////
@@ -228,6 +288,11 @@ void Game::draw() const
 		playerAnimal.draw(ColorF{ 1, 1, 1 })
 			.drawFrame(2); // 輪郭
 	}
+	for (const auto& item : items)
+	{
+		item.draw(ColorF{ 0, 1, 0 })
+			.drawFrame(2); // 輪郭
+	}
 	for (const auto& enemyAnimal : enemyAnimals)
 	{
 		enemyAnimal.draw(ColorF{ 0, 0, 0 })
@@ -239,11 +304,46 @@ void Game::draw() const
 		wall.draw(ColorF{ 0.0, 0.0, 0.0 });
 	}
 
-	// 左上位置 (20, 20) からテキストを描く
-	font(U"LIFE:{}/SCORE:{}"_fmt(0, score)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
+	font(U"SCORE:{}"_fmt(score)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
 }
 
-Rect Game::getPaddle() const
+P2Body* Game::findPlayerFromID(P2BodyID id)
 {
-	return{ Arg::center(Cursor::Pos().x, 500), 60, 10 };
+	for (Array<P2Body>::iterator playerAnimalIt = playerAnimals.begin(); playerAnimalIt < playerAnimals.end(); playerAnimalIt++)
+	{
+		if (playerAnimalIt->id() == id)
+		{
+			//  &(*playerAnimalIt); の意味をChatGPTへ質問したときのメモです。
+			//	& (*playerAnimalIt)は、C++においてポインタの取得と逆参照を組み合わせて元のオブジェクトを取得する操作です。
+			//	* playerAnimalIt - playerAnimalItが指すイテレータの位置にあるオブジェクトを逆参照して取得します。この操作により、playerAnimalItが指すP2Bodyオブジェクトにアクセスできます。
+			//	& (*playerAnimalIt) - 1で取得したオブジェクトへのポインタを取得します。つまり、元のオブジェクトへのポインタが得られます。
+			//	この操作は、イテレータからオブジェクトへのポインタを取得するために必要です。なぜなら、playerAnimalItはイテレータであり、元のオブジェクト自体ではないからです。そのため、元のオブジェクトにアクセスするには、イテレータを逆参照してオブジェクトを取得し、それに対してポインタを取得する必要があります。
+			return &(*playerAnimalIt);
+		}
+	}
+	return &(*playerAnimals.end());
+}
+
+P2Body* Game::findEnemyFromID(P2BodyID id)
+{
+	for (Array<P2Body>::iterator enemyAnimalIt = enemyAnimals.begin(); enemyAnimalIt < enemyAnimals.end(); enemyAnimalIt++)
+	{
+		if (enemyAnimalIt->id() == id)
+		{
+			return &(*enemyAnimalIt);
+		}
+	}
+	return &(*enemyAnimals.end());
+}
+
+P2Body* Game::findItemFromID(P2BodyID id)
+{
+	for (Array<P2Body>::iterator itemIt = items.begin(); itemIt < items.end(); itemIt++)
+	{
+		if (itemIt->id() == id)
+		{
+			return &(*itemIt);
+		}
+	}
+	return &(*items.end());
 }
