@@ -21,11 +21,6 @@ public:
 
 	void draw() const override;
 
-	//↓おそらく不要です。
-	P2Body* findPlayerFromID(P2BodyID id);
-	P2Body* findEnemyFromID(P2BodyID id);
-	P2Body* findItemFromID(P2BodyID id);
-
 	P2Body* findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList);
 
 	// FIXME; 1つの関数に2つの処理を組み合わせてしまっているので、修正したほうが良いかもしれません…。
