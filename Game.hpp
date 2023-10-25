@@ -23,8 +23,14 @@ public:
 
 	P2Body* findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList);
 
+private:
 	// FIXME; 1つの関数に2つの処理を組み合わせてしまっているので、修正したほうが良いかもしれません…。
 	P2Body* findBodyAndSetBodyTypeFromID(P2BodyID id, BodyType& type);
+
+	bool IsCloseToOtherBodies(const Vec2& position, const Array<P2Body>& otherBodies, const float radius);
+
+	const int RETRY_COUNT_MAX = 100;
+	Vec2 GetRandomPositionWithSafety(const Array<P2Body>& otherBodies);
 
 private:
 
@@ -74,18 +80,7 @@ private:
 	//int32 spawnEnemyCount = 0;
 	std::vector<int32> spawnEnemyTimes = { 0,10,20,30,40,50 };
 
-
 	int32 score = 0;
-
-
-
-
-
-
-
-
-
-
 };
 
 

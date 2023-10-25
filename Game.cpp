@@ -25,23 +25,32 @@ Game::Game(const InitData& init)
 
 	for (int32 index = 0; index < 5; ++index)
 	{
-		playerAnimals << world.createCircle(P2Dynamic, Vec2{ 100 + index * 50, 100 }, playerAnimalRadius,
+		enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), enemyAnimalRadius,
+			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+		enemyAnimalIDs.push_back(enemyAnimals[index].id());
+	}
+
+	for (int32 index = 0; index < 5; ++index)
+	{
+		//Vec2 randomPosition = RandomVec2(1280, 720);
+		//while (IsCloseToOtherBodies(randomPosition, enemyAnimals, 100)) {
+		//	randomPosition = RandomVec2(1280, 720);
+		//}
+		playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 		playerAnimalIDs.push_back(playerAnimals[index].id());
 	}
 
 	for (int32 index = 0; index < 5; ++index)
 	{
-		items << world.createCircle(P2Dynamic, Vec2{ 500 + index * 50, 600 }, itemRadius,
+		//Vec2 randomPosition = RandomVec2(1280, 720);
+		//while (IsCloseToOtherBodies(randomPosition, playerAnimals, 100)) {
+		//	randomPosition = RandomVec2(1280, 720);
+		//}
+
+		items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 		itemIDs.push_back(items[index].id());
-	}
-
-	for (int32 index = 0; index < 5; ++index)
-	{
-		enemyAnimals << world.createCircle(P2Dynamic, Vec2{ 300 + index * 50, 500 }, enemyAnimalRadius,
-			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-		enemyAnimalIDs.push_back(enemyAnimals[index].id());
 	}
 
 	oneSecondScoreTimer.start();
@@ -56,8 +65,12 @@ void Game::update()
 		if (spawnPlayerTime <= gameTimer.s())
 		{
 			spawnPlayerTimes.erase(std::remove(spawnPlayerTimes.begin(), spawnPlayerTimes.end(), spawnPlayerTime), spawnPlayerTimes.end());
-			playerAnimals << world.createCircle(P2Dynamic, Vec2{ 100, 100 }, playerAnimalRadius,
+			playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+
+			items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
+			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+
 			// FIXME: ↓あとで修正する必要があります…。
 			playerAnimalIDs.push_back(playerAnimals[playerAnimals.size() - 1].id());
 		}
@@ -68,7 +81,7 @@ void Game::update()
 		if (spawnEnemyTime <= gameTimer.s())
 		{
 			spawnEnemyTimes.erase(std::remove(spawnEnemyTimes.begin(), spawnEnemyTimes.end(), spawnEnemyTime), spawnEnemyTimes.end());
-			enemyAnimals << world.createCircle(P2Dynamic, Vec2{ 300, 500 }, enemyAnimalRadius,
+			enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), enemyAnimalRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 			// FIXME: ↓あとで修正する必要があります…。
 			enemyAnimalIDs.push_back(enemyAnimals[enemyAnimals.size() - 1].id());
@@ -113,25 +126,25 @@ void Game::update()
 	}
 
 	// 敵の動物から一番近いプレイヤーの動物の方向へ近づけます。
-	//for (int32 enemyIndex = 0; enemyIndex < enemyAnimals.size(); enemyIndex++)
-	//{
-	//	int32 minDistancePlayerIndex = 0;
-	//	double minEnemyToPlayerDistance = 100000;
-	//	for (int32 playerIndex = 0; playerIndex < playerAnimals.size(); playerIndex++)
-	//	{
-	//		double enemyToPlayerDistance = enemyAnimals[enemyIndex].getPos().distanceFrom(playerAnimals[playerIndex].getPos());
-	//		if (enemyToPlayerDistance < minEnemyToPlayerDistance)
-	//		{
-	//			minEnemyToPlayerDistance = enemyToPlayerDistance;
-	//			minDistancePlayerIndex = playerIndex;
-	//		}
-	//	}
-	//	const Vec2 direction = playerAnimals[minDistancePlayerIndex].getPos() - enemyAnimals[enemyIndex].getPos();		
-	//	const Vec2 speed = 10 * direction.normalized();
-	//	enemyAnimals[enemyIndex].setVelocity(speed);
-	//}
+	for (int32 enemyIndex = 0; enemyIndex < enemyAnimals.size(); enemyIndex++)
+	{
+		int32 minDistancePlayerIndex = 0;
+		double minEnemyToPlayerDistance = 100000;
+		for (int32 playerIndex = 0; playerIndex < playerAnimals.size(); playerIndex++)
+		{
+			double enemyToPlayerDistance = enemyAnimals[enemyIndex].getPos().distanceFrom(playerAnimals[playerIndex].getPos());
+			if (enemyToPlayerDistance < minEnemyToPlayerDistance)
+			{
+				minEnemyToPlayerDistance = enemyToPlayerDistance;
+				minDistancePlayerIndex = playerIndex;
+			}
+		}
+		const Vec2 direction = playerAnimals[minDistancePlayerIndex].getPos() - enemyAnimals[enemyIndex].getPos();		
+		const Vec2 speed = 10 * direction.normalized();
+		enemyAnimals[enemyIndex].setVelocity(speed);
+	}
 
-	// プレイヤーから一番近い敵を近づけます。追う・追われる対象が1対1の関係となります。
+	// 1体のプレイヤーに対して、最低1体は敵を近づけるようにします。
 	std::vector<bool> isTargetDecideds(enemyAnimals.size(), false);
 	for (int32 playerIndex = 0; playerIndex < playerAnimals.size(); playerIndex++)
 	{
@@ -218,31 +231,6 @@ void Game::update()
 
 void Game::draw() const
 {
-	//Scene::SetBackground(ColorF{ 0.2 });
-
-	//// すべてのブロックを描画する
-	//for (const auto& brick : m_bricks)
-	//{
-	//	brick.stretched(-1).draw(HSV{ brick.y - 40 });
-	//}
-
-	//// ボールを描く
-	//m_ball.draw();
-
-	//// パドルを描く
-	//getPaddle().draw();
-
-	//FontAsset(U"GameScore")(m_score).draw(10, 10);
-
-
-	// 追加
-
-	////////////////////////////////
-//
-//	描画
-//
-////////////////////////////////
-
 	for (const auto& playerAnimal : playerAnimals)
 	{
 		playerAnimal.draw(ColorF{ 1, 1, 1 })
@@ -273,8 +261,7 @@ P2Body* Game::findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList)
 	{
 		if (it->id() == id)
 		{
-			//return &(*it);
-			return const_cast<P2Body*>(&(*it));  // constポインタを返す
+			return const_cast<P2Body*>(&(*it));
 		}
 	}
 	return NULL;
@@ -305,4 +292,36 @@ P2Body* Game::findBodyAndSetBodyTypeFromID(P2BodyID id, BodyType& type)
 
 	type = BodyType::DEFAULT;
 	return NULL;
+}
+
+bool Game::IsCloseToOtherBodies(const Vec2& position, const Array<P2Body>& otherBodies, const float radius) {
+	for (const P2Body otherBody : otherBodies) {
+		if (otherBody.getPos().distanceFrom(position) < radius) {
+			return true; // 他の座標と重なる
+		}
+	}
+	return false; // 他の座標と重ならない
+}
+
+Vec2 Game::GetRandomPositionWithSafety(const Array<P2Body>& otherBodies) {
+	Vec2 randomPosition = Vec2(0, 0);
+	bool isSafe = false;
+	double radius = 300;
+	int32 retryCount = 0;
+	while (!isSafe) {
+		isSafe = true;
+		randomPosition = RandomVec2(1280, 720);
+		for (const P2Body otherBody : otherBodies) {
+			if (otherBody.getPos().distanceFrom(randomPosition) < radius) {
+				isSafe = false; // 他の座標と重なる
+				break;
+			}
+		}
+		retryCount++;
+		if (retryCount >= RETRY_COUNT_MAX)
+		{
+			break;
+		}
+	}
+	return randomPosition;
 }
