@@ -75,20 +75,22 @@ private:
 
 	Stopwatch spawnPlayerTimer;
 	double spawnPlayerIntervalTimeMax = 5;
-	double spawnPlayerIntervalAcceleration = 0.01; // 1%ずつスポーン時間が早くなっていきます。
+	double spawnPlayerIntervalAcceleration = 0.05; // 5%ずつスポーン時間が早くなっていきます。
 
 	Stopwatch spawnEnemyTimer;
 	double spawnEnemyIntervalTimeMax = 5;
-	double spawnEnemyIntervalAcceleration = 0.01; // 1%ずつスポーン時間が早くなっていきます。
+	double spawnEnemyIntervalAcceleration = -0.1; // 10%ずつスポーン時間が遅くなっていきます。
 
 	//int32 spawnPlayerCount = 0;
-	std::vector<int32> spawnPlayerTimes = { 0,10,20,30,40,50 };
+	//std::vector<int32> spawnPlayerTimes = { 0,10,20,30,40,50 };
 	//int32 spawnPlayerCountInterval = 0;
 
 	//int32 spawnEnemyCount = 0;
-	std::vector<int32> spawnEnemyTimes = { 0,10,20,30,40,50 };
+	//std::vector<int32> spawnEnemyTimes = { 0,10,20,30,40,50 };
 
 	int32 score = 0;
+
+	Vec2 clickStartPosition = Vec2(0, 0);
 };
 
 

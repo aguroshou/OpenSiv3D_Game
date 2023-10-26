@@ -99,12 +99,13 @@ void Game::update()
 		for (int32 index = 0; index < playerAnimals.size(); index++)
 		{
 			double animalToCursorDistance = playerAnimals[index].getPos().distanceFrom(Cursor::PosF());
-			if (animalToCursorDistance < 100 && animalToCursorDistance < minAnimalToCursorDistance)
+			if (animalToCursorDistance < 70 && animalToCursorDistance < minAnimalToCursorDistance)
 			{
 				minAnimalToCursorDistance = animalToCursorDistance;
 				grabAnimalIndex = index;
 
 				isGrabbing = true;
+				clickStartPosition = Cursor::PosF();
 			}
 		}
 	}
@@ -112,8 +113,16 @@ void Game::update()
 	if (MouseL.up() && isGrabbing)
 	{
 		isGrabbing = false;
-		Vec2 moveVector = Cursor::PosF() - playerAnimals[grabAnimalIndex].getPos();
-		playerAnimals[grabAnimalIndex].setVelocity(moveVector.normalized() * 50);
+		Vec2 moveVector = Cursor::PosF() - clickStartPosition;
+		if (moveVector.length() >= 10)
+		{
+			moveVector.normalize();
+		}
+		else
+		{
+			moveVector.set(0, 0);
+		}
+		playerAnimals[grabAnimalIndex].setVelocity(moveVector * 50);
 	}
 
 	// プレイヤーの動物をドラッグアンドドロップできるときに、マウスカーソルを手のアイコンにする
@@ -122,7 +131,7 @@ void Game::update()
 		for (const auto& playerAnimal : playerAnimals)
 		{
 			double animalToCursorDistance = playerAnimal.getPos().distanceFrom(Cursor::PosF());
-			if (animalToCursorDistance < 100)
+			if (animalToCursorDistance < 70)
 			{
 				Cursor::RequestStyle(CursorStyle::Hand);
 			}
@@ -211,7 +220,6 @@ void Game::update()
 				if (const_cast<P2Body*>(&(*playerAnimalIt)) == const_cast<P2Body*>(&(*pA)))
 				{
 					// 現在のイテレータが指す要素を削除し、イテレータを進める
-					//playerAnimalIt = playerAnimals.erase(playerAnimalIt);
 					playerAnimals.erase(playerAnimalIt);
 					pA = NULL;
 					break;
@@ -227,7 +235,6 @@ void Game::update()
 				if (const_cast<P2Body*>(&(*itemIt)) == const_cast<P2Body*>(&(*pB)))
 				{
 					// 現在のイテレータが指す要素を削除し、イテレータを進める
-					//itemIt = items.erase(itemIt);
 					items.erase(itemIt);
 					pB = NULL;
 					break;
@@ -281,6 +288,12 @@ void Game::draw() const
 	}
 
 	font(U"SCORE:{}"_fmt(score)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
+	//double tmpPrecisionValue = Precision(spawnPlayerIntervalTimeMax - spawnPlayerTimer.sF(), 1);
+	double tmpPrecisionValue = std::round((spawnPlayerIntervalTimeMax - spawnPlayerTimer.sF()) * 10) / 10.0; // 小数点以下1桁までに制限
+	font(U"PLAYER:{}"_fmt(tmpPrecisionValue)).draw(500, 5, ColorF{ 1.0, 0.5, 0.0 });
+	tmpPrecisionValue = std::round((spawnEnemyIntervalTimeMax - spawnEnemyTimer.sF()) * 10) / 10.0; // 小数点以下1桁までに制限
+
+	font(U"ENEMY:{}"_fmt(tmpPrecisionValue)).draw(1000, 5, ColorF{ 1.0, 0.5, 0.0 });
 }
 
 P2Body* Game::findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList)
