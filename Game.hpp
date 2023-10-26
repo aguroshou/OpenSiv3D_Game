@@ -23,6 +23,8 @@ public:
 
 	P2Body* findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList);
 
+
+
 private:
 	// FIXME; 1つの関数に2つの処理を組み合わせてしまっているので、修正したほうが良いかもしれません…。
 	P2Body* findBodyAndSetBodyTypeFromID(P2BodyID id, BodyType& type);
@@ -44,8 +46,8 @@ private:
 	Array<P2Body>  walls;
 
 	const double playerAnimalRadius = 20;
+	//Array<P2Body> playerAnimals;
 	Array<P2Body> playerAnimals;
-	Array<P2BodyID> playerAnimalIDs;
 
 	bool isPlayerAnimalGrab = false;
 	int32 grabAnimalIndex = 0;
@@ -53,11 +55,9 @@ private:
 
 	const double itemRadius = 20;
 	Array<P2Body> items;
-	Array<P2BodyID> itemIDs;
 
 	const double enemyAnimalRadius = 20;
 	Array<P2Body> enemyAnimals;
-	Array<P2BodyID> enemyAnimalIDs;
 
 	// 基本サイズ 50 のフォントを作成
 	const Font font{ 50 };
@@ -72,6 +72,14 @@ private:
 	Stopwatch oneSecondScoreTimer;
 	// ゲーム開始後の累計時間のタイマーです。
 	Stopwatch gameTimer;
+
+	Stopwatch spawnPlayerTimer;
+	double spawnPlayerIntervalTimeMax = 5;
+	double spawnPlayerIntervalAcceleration = 0.01; // 1%ずつスポーン時間が早くなっていきます。
+
+	Stopwatch spawnEnemyTimer;
+	double spawnEnemyIntervalTimeMax = 5;
+	double spawnEnemyIntervalAcceleration = 0.01; // 1%ずつスポーン時間が早くなっていきます。
 
 	//int32 spawnPlayerCount = 0;
 	std::vector<int32> spawnPlayerTimes = { 0,10,20,30,40,50 };

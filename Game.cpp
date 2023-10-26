@@ -5,13 +5,6 @@
 Game::Game(const InitData& init)
 	: IScene{ init }
 {
-	//// 横 (Scene::Width() / blockSize.x) 個、縦 5 個のブロックを配列に追加する
-	//for (auto p : step(Size{ (Scene::Width() / BrickSize.x), 5 }))
-	//{
-	//	m_bricks << Rect{ (p.x * BrickSize.x), (60 + p.y * BrickSize.y), BrickSize };
-	//}
-
-
 	// 背景色を設定する
 	Scene::SetBackground(ColorF{ 0.4, 0.7, 1.0 });
 
@@ -27,67 +20,78 @@ Game::Game(const InitData& init)
 	{
 		enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), enemyAnimalRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-		enemyAnimalIDs.push_back(enemyAnimals[index].id());
 	}
 
 	for (int32 index = 0; index < 5; ++index)
 	{
-		//Vec2 randomPosition = RandomVec2(1280, 720);
-		//while (IsCloseToOtherBodies(randomPosition, enemyAnimals, 100)) {
-		//	randomPosition = RandomVec2(1280, 720);
-		//}
 		playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-		playerAnimalIDs.push_back(playerAnimals[index].id());
 	}
 
 	for (int32 index = 0; index < 5; ++index)
 	{
-		//Vec2 randomPosition = RandomVec2(1280, 720);
-		//while (IsCloseToOtherBodies(randomPosition, playerAnimals, 100)) {
-		//	randomPosition = RandomVec2(1280, 720);
-		//}
-
 		items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
 			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-		itemIDs.push_back(items[index].id());
 	}
 
 	oneSecondScoreTimer.start();
 	gameTimer.start();
+	spawnPlayerTimer.start();
+	spawnEnemyTimer.start();
 
 }
 
 void Game::update()
 {
-	for (int32 spawnPlayerTime : spawnPlayerTimes)
+	// 配列による時間指定の方法は保留とします。
+	//for (int32 spawnPlayerTime : spawnPlayerTimes)
+	//{
+	//	if (spawnPlayerTime <= gameTimer.s())
+	//	{
+	//		spawnPlayerTimes.erase(std::remove(spawnPlayerTimes.begin(), spawnPlayerTimes.end(), spawnPlayerTime), spawnPlayerTimes.end());
+	//		playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
+	//		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+
+	//		items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
+	//		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+
+	//		// FIXME: ↓あとで修正する必要があります…。
+	//		playerAnimalIDs.push_back(playerAnimals[playerAnimals.size() - 1].id());
+	//	}
+	//}
+
+	//for (int32 spawnEnemyTime : spawnEnemyTimes)
+	//{
+	//	if (spawnEnemyTime <= gameTimer.s())
+	//	{
+	//		spawnEnemyTimes.erase(std::remove(spawnEnemyTimes.begin(), spawnEnemyTimes.end(), spawnEnemyTime), spawnEnemyTimes.end());
+	//		enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), enemyAnimalRadius,
+	//		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+	//		// FIXME: ↓あとで修正する必要があります…。
+	//		enemyAnimalIDs.push_back(enemyAnimals[enemyAnimals.size() - 1].id());
+	//	}
+	//}
+
+
+	if (spawnPlayerIntervalTimeMax <= spawnPlayerTimer.sF())
 	{
-		if (spawnPlayerTime <= gameTimer.s())
-		{
-			spawnPlayerTimes.erase(std::remove(spawnPlayerTimes.begin(), spawnPlayerTimes.end(), spawnPlayerTime), spawnPlayerTimes.end());
-			playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
-			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+		spawnPlayerIntervalTimeMax *= (1 - spawnPlayerIntervalAcceleration);
+		spawnPlayerTimer.restart();
+		playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
+		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 
-			items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
-			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-
-			// FIXME: ↓あとで修正する必要があります…。
-			playerAnimalIDs.push_back(playerAnimals[playerAnimals.size() - 1].id());
-		}
+		items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
+		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 	}
 
-	for (int32 spawnEnemyTime : spawnEnemyTimes)
+	if (spawnEnemyIntervalTimeMax <= spawnEnemyTimer.sF())
 	{
-		if (spawnEnemyTime <= gameTimer.s())
-		{
-			spawnEnemyTimes.erase(std::remove(spawnEnemyTimes.begin(), spawnEnemyTimes.end(), spawnEnemyTime), spawnEnemyTimes.end());
-			enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), enemyAnimalRadius,
-			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-			// FIXME: ↓あとで修正する必要があります…。
-			enemyAnimalIDs.push_back(enemyAnimals[enemyAnimals.size() - 1].id());
-		}
-	}
+		spawnEnemyIntervalTimeMax *= (1 - spawnEnemyIntervalAcceleration);
+		spawnEnemyTimer.restart();
 
+		enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), enemyAnimalRadius,
+		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+	}
 
 	if (MouseL.down())
 	{
@@ -139,7 +143,7 @@ void Game::update()
 				minDistancePlayerIndex = playerIndex;
 			}
 		}
-		const Vec2 direction = playerAnimals[minDistancePlayerIndex].getPos() - enemyAnimals[enemyIndex].getPos();		
+		const Vec2 direction = playerAnimals[minDistancePlayerIndex].getPos() - enemyAnimals[enemyIndex].getPos();
 		const Vec2 speed = 10 * direction.normalized();
 		enemyAnimals[enemyIndex].setVelocity(speed);
 	}
@@ -198,9 +202,41 @@ void Game::update()
 				pA = pB;
 				pB = pTmpBody;
 			}
-			//FIXME: P2Bodyの削除は、release関数を呼ぶだけで良いのか分かっていません。
+
 			pA->release();
 			pB->release();
+
+			for (auto playerAnimalIt = playerAnimals.begin(); playerAnimalIt != playerAnimals.end();)
+			{
+				if (const_cast<P2Body*>(&(*playerAnimalIt)) == const_cast<P2Body*>(&(*pA)))
+				{
+					// 現在のイテレータが指す要素を削除し、イテレータを進める
+					//playerAnimalIt = playerAnimals.erase(playerAnimalIt);
+					playerAnimals.erase(playerAnimalIt);
+					pA = NULL;
+					break;
+				}
+				else
+				{
+					++playerAnimalIt;
+				}
+			}
+
+			for (auto itemIt = items.begin(); itemIt != items.end();)
+			{
+				if (const_cast<P2Body*>(&(*itemIt)) == const_cast<P2Body*>(&(*pB)))
+				{
+					// 現在のイテレータが指す要素を削除し、イテレータを進める
+					//itemIt = items.erase(itemIt);
+					items.erase(itemIt);
+					pB = NULL;
+					break;
+				}
+				else
+				{
+					++itemIt;
+				}
+			}
 			score += 100;
 		}
 	}
@@ -211,12 +247,6 @@ void Game::update()
 		oneSecondScoreTimer.restart();
 	}
 
-	////////////////////////////////
-	//
-	//	状態更新
-	//
-	////////////////////////////////
-
 	for (accumulatorSec += Scene::DeltaTime(); StepSec <= accumulatorSec; accumulatorSec -= StepSec)
 	{
 		// 2D 物理演算のワールドを更新する
@@ -225,8 +255,6 @@ void Game::update()
 
 	// 2D カメラを更新する
 	camera.update();
-
-
 }
 
 void Game::draw() const
@@ -306,7 +334,7 @@ bool Game::IsCloseToOtherBodies(const Vec2& position, const Array<P2Body>& other
 Vec2 Game::GetRandomPositionWithSafety(const Array<P2Body>& otherBodies) {
 	Vec2 randomPosition = Vec2(0, 0);
 	bool isSafe = false;
-	double radius = 300;
+	double radius = 150;
 	int32 retryCount = 0;
 	while (!isSafe) {
 		isSafe = true;
