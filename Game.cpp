@@ -268,18 +268,46 @@ void Game::draw() const
 {
 	for (const auto& playerAnimal : playerAnimals)
 	{
-		playerAnimal.draw(ColorF{ 1, 1, 1 })
-			.drawFrame(2); // 輪郭
+		playerAnimal.draw(Color{ 165, 105, 30 })
+			.drawFrame(1, Color{ 0, 0, 0 });
+
+		double rotation = Math::Atan2(playerAnimal.getVelocity().x, -playerAnimal.getVelocity().y);		
+		if (rotation < 0)
+		{
+			rotation += 360_deg;
+		}
+		if (playerAnimal.getVelocity() == Vec2(0, 0))
+		{
+			rotation = 0;
+		}
+
+		textureMole.scaled(0.7)
+			.rotatedAt(textureMole.size() * 0.7 / 2, rotation)
+			.draw(playerAnimal.getPos() - textureMole.size() * 0.7 / 2);
 	}
 	for (const auto& item : items)
 	{
-		item.draw(ColorF{ 0, 1, 0 })
-			.drawFrame(2); // 輪郭
+		item.draw(Color{ 144, 190, 14 })
+			.drawFrame(1, Color{ 0, 0, 0 });
+		textureHole.scaled(0.15).draw(item.getPos() - textureHole.size() * 0.15 / 2);
 	}
 	for (const auto& enemyAnimal : enemyAnimals)
 	{
-		enemyAnimal.draw(ColorF{ 0, 0, 0 })
-			.drawFrame(2); // 輪郭
+		double rotation = Math::Atan2(enemyAnimal.getVelocity().x, -enemyAnimal.getVelocity().y);
+		if (rotation < 0)
+		{
+			rotation += 360_deg;
+		}
+		if (enemyAnimal.getVelocity() == Vec2(0, 0))
+		{
+			rotation = 0;
+		}
+
+		enemyAnimal.draw(Color{ 230, 230, 230 })
+			.drawFrame(1, Color{ 0, 0, 0 });
+		textureHammer.scaled(0.09)
+			.rotatedAt(textureHammer.size() * 0.09 / 2, rotation)			
+			.draw(enemyAnimal.getPos() - textureHammer.size() * 0.09 / 2);
 	}
 
 	for (const auto& wall : walls)

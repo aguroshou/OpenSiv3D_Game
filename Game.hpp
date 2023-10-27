@@ -91,6 +91,10 @@ private:
 	int32 score = 0;
 
 	Vec2 clickStartPosition = Vec2(0, 0);
+
+	const Texture textureMole{ U"images/mole.png" };
+	const Texture textureHole{ U"images/hole.png" };
+	const Texture textureHammer{ U"images/hammer.png" };
 };
 
 
