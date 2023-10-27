@@ -271,7 +271,7 @@ void Game::draw() const
 		playerAnimal.draw(Color{ 165, 105, 30 })
 			.drawFrame(1, Color{ 0, 0, 0 });
 
-		double rotation = Math::Atan2(playerAnimal.getVelocity().x, -playerAnimal.getVelocity().y);		
+		double rotation = Math::Atan2(playerAnimal.getVelocity().x, -playerAnimal.getVelocity().y);
 		if (rotation < 0)
 		{
 			rotation += 360_deg;
@@ -306,13 +306,25 @@ void Game::draw() const
 		enemyAnimal.draw(Color{ 230, 230, 230 })
 			.drawFrame(1, Color{ 0, 0, 0 });
 		textureHammer.scaled(0.09)
-			.rotatedAt(textureHammer.size() * 0.09 / 2, rotation)			
+			.rotatedAt(textureHammer.size() * 0.09 / 2, rotation)
 			.draw(enemyAnimal.getPos() - textureHammer.size() * 0.09 / 2);
 	}
 
 	for (const auto& wall : walls)
 	{
 		wall.draw(ColorF{ 0.0, 0.0, 0.0 });
+	}
+
+	if (isGrabbing)
+	{
+		Vec2 moveVector = Cursor::PosF() - clickStartPosition;
+		if (moveVector.length() >= 10)
+		{
+			moveVector.normalize();
+			Line{ playerAnimals[grabAnimalIndex].getPos() + moveVector * 20, (playerAnimals[grabAnimalIndex].getPos() + moveVector * 70) }
+				.stretched(-10)
+				.drawArrow(10, { 20, 20 }, ColorF{ 1.0, 0.0, 0.0, 0.8 });
+		}
 	}
 
 	font(U"SCORE:{}"_fmt(score)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
