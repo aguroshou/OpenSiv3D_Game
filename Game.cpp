@@ -225,10 +225,26 @@ void Game::update()
 			pA->release();
 			pB->release();
 
+			// FIXME: IndexとIteratorの両方を必要としているため、冗長なプログラムとなってしまっています。
+			// Array<P2Body>のIndex←→Iteratorの値を取得する関数は無いようなので、作成する必要があるかもしれません。
+			int playerAnimalIndex = 0;
 			for (auto playerAnimalIt = playerAnimals.begin(); playerAnimalIt != playerAnimals.end();)
 			{
 				if (const_cast<P2Body*>(&(*playerAnimalIt)) == const_cast<P2Body*>(&(*pA)))
 				{
+					// ドラッグ中のプレイヤーが削除される場合は、ドラッグを中止します。
+					//if (const_cast<P2Body*>(&(*playerAnimalIt)) == const_cast<P2Body*>(&playerAnimals[grabAnimalIndex]))
+					if(playerAnimalIndex == grabAnimalIndex)
+					{
+						isGrabbing = false;
+						grabAnimalIndex = 0;
+					}
+					// ドラッグ中のプレイヤーの番号よりも、削除されるプレイヤーの番号が小さい場合は、配列の番号の変更(-1)に対応します。
+					else if(playerAnimalIndex < grabAnimalIndex)
+					{
+						grabAnimalIndex--;
+					}
+
 					// 現在のイテレータが指す要素を削除し、イテレータを進める
 					playerAnimals.erase(playerAnimalIt);
 					pA = NULL;
@@ -238,6 +254,7 @@ void Game::update()
 				{
 					++playerAnimalIt;
 				}
+				playerAnimalIndex++;
 			}
 
 			for (auto itemIt = items.begin(); itemIt != items.end();)
