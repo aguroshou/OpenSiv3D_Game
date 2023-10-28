@@ -95,6 +95,12 @@ private:
 	const Texture textureMole{ U"images/mole.png" };
 	const Texture textureHole{ U"images/hole.png" };
 	const Texture textureHammer{ U"images/hammer.png" };
+
+	Audio dragSound{ U"sounds/drag.wav" };
+	Audio dropWaitSound{ U"sounds/dropWait.wav" };
+	Audio dropMoveSound{ U"sounds/dropMove.wav" };
+	Audio enemyHitSound{ U"sounds/enemyHit.wav" };
+	Audio goalSound{ U"sounds/goal.wav" };
 };
 
 

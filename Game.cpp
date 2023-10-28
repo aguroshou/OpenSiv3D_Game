@@ -39,10 +39,16 @@ Game::Game(const InitData& init)
 	spawnPlayerTimer.start();
 	spawnEnemyTimer.start();
 
+
 }
 
 void Game::update()
 {
+	dragSound.setVolume(0.0);
+	dropWaitSound.setVolume(1.0);
+	dropMoveSound.setVolume(0.3);
+	enemyHitSound.setVolume(0.5);
+	goalSound.setVolume(1);
 	// 配列による時間指定の方法は保留とします。
 	//for (int32 spawnPlayerTime : spawnPlayerTimes)
 	//{
@@ -106,6 +112,7 @@ void Game::update()
 
 				isGrabbing = true;
 				clickStartPosition = Cursor::PosF();
+				dragSound.playOneShot(0.1);
 			}
 		}
 	}
@@ -117,10 +124,12 @@ void Game::update()
 		if (moveVector.length() >= 10)
 		{
 			moveVector.normalize();
+			dropMoveSound.playOneShot(0.2);
 		}
 		else
 		{
 			moveVector.set(0, 0);
+			dropWaitSound.playOneShot(1.0);
 		}
 		playerAnimals[grabAnimalIndex].setVelocity(moveVector * 50);
 	}
@@ -198,6 +207,7 @@ void Game::update()
 		if ((aType == BodyType::PLAYER && bType == BodyType::ENEMY) ||
 			(aType == BodyType::ENEMY && bType == BodyType::PLAYER))
 		{
+			enemyHitSound.playOneShot(0.1);
 			// ランキング画面へ
 			changeScene(State::Ranking);
 			getData().lastGameScore = score;
@@ -244,6 +254,7 @@ void Game::update()
 					++itemIt;
 				}
 			}
+			goalSound.playOneShot(0.5);
 			score += 100;
 		}
 	}
