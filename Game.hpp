@@ -96,11 +96,13 @@ private:
 	const Texture textureHole{ U"images/hole.png" };
 	const Texture textureHammer{ U"images/hammer.png" };
 
-	Audio dragSound{ U"sounds/drag.wav" };
-	Audio dropWaitSound{ U"sounds/dropWait.wav" };
-	Audio dropMoveSound{ U"sounds/dropMove.wav" };
-	Audio enemyHitSound{ U"sounds/enemyHit.wav" };
-	Audio goalSound{ U"sounds/goal.wav" };
+	const Audio dragAudio{ U"sounds/drag.wav" };
+	const Audio dropWaitAudio{ U"sounds/dropWait.wav" };
+	const Audio dropMoveAudio{ U"sounds/dropMove.wav" };
+	const Audio enemyHitAudio{ U"sounds/enemyHit.wav" };
+	const Audio goalAudio{ U"sounds/goal.wav" };
+	const Audio gameBgmAudio{ Audio::Stream, U"sounds/gameBgm.wav" };
+
 };
 
 

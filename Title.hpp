@@ -22,4 +22,6 @@ private:
 
 	Rect m_exitButton{ Arg::center = Scene::Center().movedBy(0, 200), 300, 60 };
 	Transition m_rankingTransition{ 0.4s, 0.2s };
+
+	const Audio titleBgmAudio{ Audio::Stream, U"sounds/titleBgm.wav" };
 };

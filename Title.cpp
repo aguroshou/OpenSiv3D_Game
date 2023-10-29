@@ -1,7 +1,10 @@
 ﻿# include "Title.hpp"
 
 Title::Title(const InitData& init)
-	: IScene{ init } {}
+	: IScene{ init }
+{
+	titleBgmAudio.playOneShot(0.2);
+}
 
 void Title::update()
 {
