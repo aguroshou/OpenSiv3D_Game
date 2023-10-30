@@ -423,3 +423,4 @@ gmon.out
 # example Wavefront .obj files
 !**/example/obj/
 !**/example/obj/*.obj
+Url.hpp

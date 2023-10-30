@@ -797,5 +797,8 @@
     <ClInclude Include="Title.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Url.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
