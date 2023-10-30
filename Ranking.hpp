@@ -40,7 +40,7 @@ private:
 	// 念のためにURLは公開リポジトリへアップロードしないようにしています。
 	const std::string url{ SIV3D_OBFUSCATE(SPREAD_SHEET_URL) };
 #else
-	// FIXME: 下記リポジトリのURLを掲載していますが、修正する必要があります。
+	// FIXME: 下記リポジトリに掲載されている、スプレッドシートのURLを掲載していますが、別の方が実装する際には修正する必要があります。
 	//https://github.com/Siv3D/Siv3D-Samples/tree/main/Samples/Leaderboard
 	// Google Apps Script の URL（サンプル用の URL. 定期的に記録がクリアされます）
 	// 実行ファイルに URL が直接埋め込まれるのを防ぐため、SIV3D_OBFUSCATE() で URL を難読化
@@ -58,10 +58,10 @@ private:
 	Optional<AsyncTask<HTTPResponse>> scorePostTask;
 
 	// 自身のユーザ名
-	String userName;// = MakeRandomUserName();
+	String userName;
 
 	// 自身のスコア
-	double score;// = MakeRandomScore();
+	double score;
 
 	// 最後にリーダーボードを取得した時刻
 	DateTime lastUpdateTime{ 2023, 1, 1 };
@@ -70,6 +70,8 @@ private:
 	bool isScorePosted = false;
 
 	Array<Record> leaderboard;
+
+	TextEditState userNameTextBox;
 };
 
 

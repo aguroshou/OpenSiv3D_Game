@@ -147,33 +147,33 @@ AsyncTask<HTTPResponse> CreatePostTask(const URLView url, const StringView userN
 	return SimplePostAsync(requestURL, {}, nullptr, 0);
 }
 
-/// @brief ランダムなスコアを返します。
-/// @return ランダムなスコア
-double MakeRandomScore()
-{
-	return (Random(10000) / 100.0);
-}
-
-/// @brief ランダムなユーザー名を作成します。
-/// @return ランダムなユーザー名
-String MakeRandomUserName()
-{
-	static const Array<String> words1 =
-	{
-		U"Blue", U"Red", U"Green", U"Silver", U"Gold",
-		U"Happy", U"Angry", U"Sad", U"Exciting", U"Scary",
-		U"Big", U"Small", U"Large", U"Tiny", U"Short",
-	};
-
-	static const Array<String> words2 =
-	{
-		U"Lion", U"Dragon", U"Tiger", U"Eagle", U"Shark",
-		U"Pizza", U"Curry", U"Ramen", U"Sushi", U"Salad",
-		U"Cat", U"Dog", U"Mouse", U"Rabbit", U"Fox",
-	};
-
-	return (U"{} {} {:0>4}"_fmt(words1.choice(), words2.choice(), Random(9999)));
-}
+///// @brief ランダムなスコアを返します。
+///// @return ランダムなスコア
+//double MakeRandomScore()
+//{
+//	return (Random(10000) / 100.0);
+//}
+//
+///// @brief ランダムなユーザー名を作成します。
+///// @return ランダムなユーザー名
+//String MakeRandomUserName()
+//{
+//	static const Array<String> words1 =
+//	{
+//		U"Blue", U"Red", U"Green", U"Silver", U"Gold",
+//		U"Happy", U"Angry", U"Sad", U"Exciting", U"Scary",
+//		U"Big", U"Small", U"Large", U"Tiny", U"Short",
+//	};
+//
+//	static const Array<String> words2 =
+//	{
+//		U"Lion", U"Dragon", U"Tiger", U"Eagle", U"Shark",
+//		U"Pizza", U"Curry", U"Ramen", U"Sushi", U"Salad",
+//		U"Cat", U"Dog", U"Mouse", U"Rabbit", U"Fox",
+//	};
+//
+//	return (U"{} {} {:0>4}"_fmt(words1.choice(), words2.choice(), Random(9999)));
+//}
 
 Ranking::Ranking(const InitData& init)
 	: IScene{ init }
@@ -182,24 +182,30 @@ Ranking::Ranking(const InitData& init)
 
 	if (data.lastGameScore)
 	{
-		const int32 lastScore = *data.lastGameScore;
+		//const int32 lastScore = *data.lastGameScore;
 
 		// ランキングを再構成
-		data.highScores << lastScore;
-		data.highScores.rsort();
-		data.highScores.resize(RankingCount);
+		//data.highScores << lastScore;
+		//data.highScores.rsort();
+		//data.highScores.resize(RankingCount);
 
-		// ランクインしていたら m_rank に順位をセット
-		for (int32 i = 0; i < RankingCount; ++i)
-		{
-			if (data.highScores[i] == lastScore)
-			{
-				m_rank = i;
-				break;
-			}
-		}
+		//// ランクインしていたら m_rank に順位をセット
+		//for (int32 i = 0; i < RankingCount; ++i)
+		//{
+		//	if (data.highScores[i] == lastScore)
+		//	{
+		//		m_rank = i;
+		//		break;
+		//	}
+		//}
+
+		score = *data.lastGameScore;
 
 		data.lastGameScore.reset();
+	}
+	else
+	{
+		score = 0;
 	}
 
 	Scene::SetBackground(ColorF{ 0.6, 0.8, 0.7 });
@@ -207,49 +213,64 @@ Ranking::Ranking(const InitData& init)
 	// リーダーボードを取得するタスク
 	leaderboardGetTask = CreateGetTask(LeaderboardURL);
 
-	userName = MakeRandomUserName();
+	userNameTextBox.text = (U"");
+	//userName = (U"");
+	//userName = MakeRandomUserName();
 
-	score = MakeRandomScore();
+	//score = MakeRandomScore();
 
 }
 
 void Ranking::update()
 {
-	if (MouseR.down())
+	// 通信が完了しているか
+	const bool isReady = (not leaderboardGetTask) && (not scorePostTask);
+
+	// 自身のユーザー名を更新する
+	//if (SimpleGUI::Button(U"\U000F0004 {}"_fmt(userName), Vec2{ 40, 40 }, 330))
+	//{
+	//	userName = MakeRandomUserName();
+	//	isScorePosted = false;
+	//}
+
+	font(U"↓15文字以内で名前を入力してください。").draw(20, Vec2{ 40, 10 }, ColorF{ 0.11 });
+
+	if (isScorePosted)
+	{
+		SimpleGUI::TextBox(userNameTextBox, Vec2{ 40, 40 }, 330, 15, false);
+	}
+	else
+	{
+		SimpleGUI::TextBox(userNameTextBox, Vec2{ 40, 40 }, 330, 15, true);
+	}
+
+
+	// 自身のスコアを更新する
+	//if (SimpleGUI::Button(U"SCORE:{}"_fmt(score), Vec2{ 384, 40 }, 160, false))
+	//{
+	//	//score = MakeRandomScore();
+	//	//isScorePosted = false;
+	//}
+	font(U"SCORE:{}"_fmt(score)).draw(20, Vec2{ 384, 40 }, ColorF{ 0.11 });
+
+	// 現在のスコアを送信する
+	if (SimpleGUI::Button(U"ランキング登録", { 560, 40 }, 160, (isReady && (not isScorePosted) && (userNameTextBox.text != (U"")) && score != 0)))
+	{
+		//scorePostTask = CreatePostTask(LeaderboardURL, userName, score);
+		scorePostTask = CreatePostTask(LeaderboardURL, userNameTextBox.text, score);
+	}
+
+	if (SimpleGUI::Button(U"タイトルへ戻る", { 860, 40 }, 160, true))
 	{
 		// タイトルシーンへ
 		changeScene(State::Title);
 	}
 
-
-	// 通信が完了しているか
-	const bool isReady = (not leaderboardGetTask) && (not scorePostTask);
-
-	// 自身のユーザー名を更新する
-	if (SimpleGUI::Button(U"\U000F0004 {}"_fmt(userName), Vec2{ 40, 40 }, 330))
-	{
-		userName = MakeRandomUserName();
-		isScorePosted = false;
-	}
-
-	// 自身のスコアを更新する
-	if (SimpleGUI::Button(U"\U000F0AE2 {}"_fmt(score), Vec2{ 384, 40 }, 160))
-	{
-		score = MakeRandomScore();
-		isScorePosted = false;
-	}
-
-	// 現在のスコアを送信する
-	if (SimpleGUI::Button(U"\U000F0415 Submit", { 560, 40 }, 160, (isReady && (not isScorePosted))))
-	{
-		scorePostTask = CreatePostTask(LeaderboardURL, userName, score);
-	}
-
 	// リーダーボードを更新する
-	if (SimpleGUI::Button(U"\U000F0453 Refresh", { 560, 100 }, 160, isReady))
-	{
-		leaderboardGetTask = CreateGetTask(LeaderboardURL);
-	}
+	//if (SimpleGUI::Button(U"ランキング更新", { 560, 100 }, 160, isReady))
+	//{
+	//	leaderboardGetTask = CreateGetTask(LeaderboardURL);
+	//}
 
 	// リーダーボードの更新時刻を表示する
 	font(U"Last updated:\n{}"_fmt(lastUpdateTime)).draw(12, 560, 140, ColorF{ 0.25 });
