@@ -5,8 +5,6 @@
 // .gitignoreに追加しているため、使用できない場合はコメントアウトしてください。
 # include "Url.hpp"
 
-# include "SimpleTable.hpp"
-
 /// @brief レコード
 struct Record
 {

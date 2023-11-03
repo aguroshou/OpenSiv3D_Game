@@ -318,20 +318,6 @@ void Ranking::update()
 	// リーダーボードを描画する
 	if (leaderboard)
 	{
-		SimpleTable table{ { 100, 260, 140 } };
-
-		// ヘッダー行を追加する
-		table.push_back_row({ U"Rank", U"Player Name", U"Score" }, { 0, 0, 0 });
-		table.setRowBackgroundColor(0, ColorF{ 0.92 });
-
-		// 順位
-		int32 rank = 1;
-
-		// リーダーボードの内容を追加する
-		for (auto& record : leaderboard)
-		{
-			table.push_back_row({ Format(rank++), record.userName, Format(record.score) });
-		}
 		for (size_t i = 0; i < leaderboard.size(); ++i)
 		{
 			const auto& record = leaderboard[i];

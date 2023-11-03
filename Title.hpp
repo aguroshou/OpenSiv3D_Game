@@ -24,4 +24,6 @@ private:
 	Transition m_rankingTransition{ 0.4s, 0.2s };
 
 	const Audio titleBgmAudio{ Audio::Stream, U"sounds/titleBgm.wav" };
+
+	const Texture titleTexture{ U"images/title.png" };
 };
