@@ -107,7 +107,6 @@ public:
 	AsyncHTTPTask CreateGetTask(const URLView url, int32 count = 10);
 	AsyncHTTPTask CreatePostTask(const URLView url, const StringView userName, double score, JSON additionalData = JSON::Invalid());
 
-
 	Ranking(const InitData& init);
 	~Ranking();
 
@@ -155,4 +154,7 @@ private:
 
 	// スコアを送信したか
 	bool isScorePosted = false;
+
+	Array<Record> leaderboard;
+
 };

@@ -533,24 +533,127 @@ Ranking::~Ranking()
 
 void Ranking::update()
 {
+	rankingTexture.resized(1280).draw(0, 0);
+
 	//if (MouseL.down())
 	//{
 	//	// タイトルシーンへ
 	//	changeScene(State::Title);
 	//}
 
-	if (m_BackRect.leftClicked())
+	//if (m_BackRect.leftClicked())
+	//{
+	//	changeScene(State::Title);
+	//}
+
+			// 通信が完了しているか
+	const bool isReady = (not leaderboardGetTask) && (not scorePostTask);
+
+	// 自身のユーザー名を更新する
+	if (SimpleGUI::Button(U"\U000F0004 {}"_fmt(userName), Vec2{ 40, 40 }, 330))
 	{
-		changeScene(State::Title);
+		isScorePosted = false;
 	}
 
+	// 自身のスコアを更新する
+	if (SimpleGUI::Button(U"\U000F0AE2 {}"_fmt(score), Vec2{ 384, 40 }, 160))
+	{
+		isScorePosted = false;
+	}
+
+	// 現在のスコアを送信する
+	if (SimpleGUI::Button(U"\U000F0415 Submit", { 560, 40 }, 160, (isReady && (not isScorePosted))))
+	{
+		scorePostTask = CreatePostTask(LeaderboardURL, userName, score);
+	}
+
+	// リーダーボードを更新する
+	if (SimpleGUI::Button(U"\U000F0453 Refresh", { 560, 100 }, 160, isReady))
+	{
+		leaderboardGetTask = CreateGetTask(LeaderboardURL);
+	}
+
+	// リーダーボードの更新時刻を表示する
+	font(U"Last updated:\n{}"_fmt(lastUpdateTime)).draw(12, 560, 140, ColorF{ 0.25 });
+
+	// スコア送信処理が完了したら
+	if (scorePostTask && scorePostTask->isReady())
+	{
+		if (const auto response = scorePostTask->getResponse();
+			response.isOK())
+		{
+			// スコアを送信済みにし、再送信できないようにする
+			isScorePosted = true;
+
+			// リーダーボードを更新する
+			leaderboardGetTask = CreateGetTask(LeaderboardURL);
+		}
+		else
+		{
+			Print << U"Failed to submit the score.";
+		}
+
+		scorePostTask.reset();
+	}
+
+	// リーダーボード取得処理が完了したら
+	if (leaderboardGetTask && leaderboardGetTask->isReady())
+	{
+		if (const auto response = leaderboardGetTask->getResponse();
+			response.isOK())
+		{
+			//Array<Record> leaderboard;
+
+			if (ReadLeaderboard(leaderboardGetTask->getAsJSON(), leaderboard))
+			{
+				// リーダーボードを表示するテーブルの内容を更新する
+				table = ToTable(leaderboard);
+
+				// リーダーボードの内容を追加する
+
+				//for (auto& record : leaderboard)
+				//{
+				//	table.push_back_row({ Format(rank++), record.userName, Format(record.score) });
+				//}
+
+				// 最後にリーダーボードを取得した時刻を更新する
+				lastUpdateTime = DateTime::Now();
+			}
+			else
+			{
+				Print << U"Failed to read the leaderboard.";
+			}
+		}
+
+		leaderboardGetTask.reset();
+	}
+
+	int32 rankingSize = std::min(static_cast<int32>(leaderboard.size()), 10);
+	for (size_t i = 0; i < rankingSize; ++i)
+	{
+		const auto& record = leaderboard[i];
+
+		//font(U"rank: {}, name: {}, score: {}"_fmt((i + 1), record.userName, record.score)).draw(20, Vec2{ 40, (100 + i * 30) }, ColorF{ 0.11 });
+		font(U"{}"_fmt(record.userName)).draw(20, Vec2{ 840, (100 + i * 30) }, ColorF{ 0.11 });
+		font(U"<{}>"_fmt(record.score)).draw(20, Vec2{ 540, (100 + i * 30) }, ColorF{ 0.11 });
+	}
+
+	// リーダーボードを描画する
+	if (table)
+	{
+		table.draw({ 40, 100 });
+	}
+	else
+	{
+		// リーダーボードが空の場合は、ロード中であることを示すアニメーションを描画する
+		Circle{ 292, 260, 80 }.drawArc((Scene::Time() * 90_deg), 300_deg, 10, 0);
+	}
 }
 
 void Ranking::draw() const
 {
 	Scene::SetBackground(ColorF{ 0, 0, 0 });
 
-	rankingTexture.resized(1280).draw(0, 0);
 
 	//FontAsset(U"Ranking")(U"RANKING").drawAt(400, 60);
 
