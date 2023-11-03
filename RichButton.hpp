@@ -57,6 +57,9 @@ private:
 	static MultiPolygon CreateEmojiPolygons(const Emoji& emoji);
 
 	static MultiPolygon MakeRoundBuffer(const MultiPolygon& polygons, int32 distance);
+
+	const Texture titleTexture{ U"images/ranking.png" };
+
 };
 
 //void Main()

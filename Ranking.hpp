@@ -81,6 +81,7 @@
 
 # pragma once
 # include "Common.hpp"
+# include "RichButton.hpp"
 
 // ランキングシーン
 class Ranking : public App::Scene
@@ -88,6 +89,7 @@ class Ranking : public App::Scene
 public:
 
 	Ranking(const InitData& init);
+	~Ranking();
 
 	void update() override;
 
@@ -98,4 +100,14 @@ private:
 	static constexpr int32 RankingCount = 5;
 
 	int32 m_rank = -1;
+
+	Rect m_SubscribeRect{ 220, 415, 160, 60 };
+	Rect m_BackRect{ 220, 520, 160, 60 };
+
+	const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
+
+	const Texture rankingTexture{ U"images/ranking.png" };
+
+	RichButton* m_pSubscribeRichButton;
+	RichButton* m_pBackRichButton;
 };

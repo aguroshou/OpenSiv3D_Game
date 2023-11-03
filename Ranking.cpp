@@ -403,38 +403,58 @@ Ranking::Ranking(const InitData& init)
 
 		data.lastGameScore.reset();
 	}
+
+	m_pSubscribeRichButton = new RichButton(U"✉️"_emoji);
+	m_pBackRichButton = new RichButton(U"↩️"_emoji);
+}
+
+Ranking::~Ranking()
+{
+	delete m_pSubscribeRichButton;
+	delete m_pBackRichButton;
 }
 
 void Ranking::update()
 {
-	if (MouseL.down())
+	//if (MouseL.down())
+	//{
+	//	// タイトルシーンへ
+	//	changeScene(State::Title);
+	//}
+
+	if (m_BackRect.leftClicked())
 	{
-		// タイトルシーンへ
 		changeScene(State::Title);
 	}
+
 }
 
 void Ranking::draw() const
 {
-	Scene::SetBackground(ColorF{ 0.4, 0.6, 0.9 });
+	Scene::SetBackground(ColorF{ 0, 0, 0 });
 
-	FontAsset(U"Ranking")(U"RANKING").drawAt(400, 60);
+	rankingTexture.resized(1280).draw(0, 0);
 
-	const auto& data = getData();
+	//FontAsset(U"Ranking")(U"RANKING").drawAt(400, 60);
 
-	// ランキングを表示
-	for (auto i : step(RankingCount))
-	{
-		const RectF rect{ 100, 120 + i * 80, 600, 80 };
+	//const auto& data = getData();
 
-		rect.draw(ColorF{ 1.0, 1.0 - i * 0.2 });
+	//// ランキングを表示
+	//for (auto i : step(RankingCount))
+	//{
+	//	const RectF rect{ 100, 120 + i * 80, 600, 80 };
 
-		FontAsset(U"Ranking")(data.highScores[i]).drawAt(rect.center(), ColorF{ 0.25 });
+	//	rect.draw(ColorF{ 1.0, 1.0 - i * 0.2 });
 
-		// ランクインしていたら
-		if (i == m_rank)
-		{
-			rect.stretched(Periodic::Triangle0_1(0.5s) * 10).drawFrame(10, ColorF{ 0.8, 0.6, 0.4 });
-		}
-	}
+	//	FontAsset(U"Ranking")(data.highScores[i]).drawAt(rect.center(), ColorF{ 0.25 });
+
+	//	// ランクインしていたら
+	//	if (i == m_rank)
+	//	{
+	//		rect.stretched(Periodic::Triangle0_1(0.5s) * 10).drawFrame(10, ColorF{ 0.8, 0.6, 0.4 });
+	//	}
+	//}
+
+	m_pSubscribeRichButton->draw(m_SubscribeRect, font, U"とうろく");
+	m_pBackRichButton->draw(m_BackRect, font, U"もどる");
 }
