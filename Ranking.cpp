@@ -219,10 +219,24 @@ Ranking::Ranking(const InitData& init)
 
 	//score = MakeRandomScore();
 
+	m_pSubscribeRichButton = new RichButton(U"✉️"_emoji);
+	m_pBackRichButton = new RichButton(U"↩️"_emoji);
+}
+
+Ranking::~Ranking()
+{
+	delete m_pSubscribeRichButton;
+	delete m_pBackRichButton;
 }
 
 void Ranking::update()
 {
+
+	rankingTexture.resized(1280).draw(0, 0);
+
+	m_pSubscribeRichButton->draw(m_SubscribeRect, font, U"とうろく");
+	m_pBackRichButton->draw(m_BackRect, font, U"もどる");
+
 	// 通信が完了しているか
 	const bool isReady = (not leaderboardGetTask) && (not scorePostTask);
 
@@ -318,12 +332,17 @@ void Ranking::update()
 	// リーダーボードを描画する
 	if (leaderboard)
 	{
-		for (size_t i = 0; i < leaderboard.size(); ++i)
+		int32 rankingSize = std::min(static_cast<int32>(leaderboard.size()), 10);
+		for (size_t i = 0; i < rankingSize; ++i)
 		{
 			const auto& record = leaderboard[i];
 
-			font(U"rank: {}, name: {}, score: {}"_fmt((i + 1), record.userName, record.score)).draw(20, Vec2{ 40, (100 + i * 30) }, ColorF{ 0.11 });
+			//font(U"rank: {}, name: {}, score: {}"_fmt((i + 1), record.userName, record.score)).draw(20, Vec2{ 40, (100 + i * 30) }, ColorF{ 0.11 });
+			font(U"{}"_fmt(record.userName)).draw(20, Vec2{ 840, (100 + i * 30) }, ColorF{ 0.11 });
+			font(U"<{}>"_fmt(record.score)).draw(20, Vec2{ 540, (100 + i * 30) }, ColorF{ 0.11 });
 		}
+
+
 	}
 	else
 	{
@@ -355,7 +374,6 @@ void Ranking::draw() const
 	//		rect.stretched(Periodic::Triangle0_1(0.5s) * 10).drawFrame(10, ColorF{ 0.8, 0.6, 0.4 });
 	//	}
 	//}
-
 
 
 }

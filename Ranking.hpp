@@ -1,5 +1,6 @@
 ﻿# pragma once
 # include "Common.hpp"
+# include "RichButton.hpp"
 
 // スプレッドシートへのURLを記載しているヘッダーです。
 // .gitignoreに追加しているため、使用できない場合はコメントアウトしてください。
@@ -24,6 +25,7 @@ class Ranking : public App::Scene
 public:
 
 	Ranking(const InitData& init);
+	~Ranking();
 
 	void update() override;
 
@@ -72,6 +74,16 @@ private:
 	Array<Record> leaderboard;
 
 	TextEditState userNameTextBox;
+
+	Rect m_SubscribeRect{ 220, 415, 160, 60 };
+	Rect m_BackRect{ 220, 520, 160, 60 };
+
+	//const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
+
+	const Texture rankingTexture{ U"images/ranking.png" };
+
+	RichButton* m_pSubscribeRichButton;
+	RichButton* m_pBackRichButton;
 };
 
 
