@@ -2,12 +2,15 @@
 # include "Common.hpp"
 # include "RichButton.hpp"
 
+extern RichButton button1;
+
 // タイトルシーン
 class Title : public App::Scene
 {
 public:
 
 	Title(const InitData& init);
+	~Title();
 
 	void update() override;
 
@@ -30,9 +33,19 @@ private:
 
 	const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
 
-public:
-	RichButton button1{ U"🏆"_emoji };
-	RichButton button2{ U"↩️"_emoji };
-	RichButton button3{ U"🎮"_emoji };
-	RichButton button4{ U"✉️"_emoji };
+	Rect m_StartRect{ 220, 415, 160, 60 };
+	Rect m_RankingRect{ 220, 520, 160, 60 };
+
+	// FIXME: 実体で実装する方法が分かりませんでした…。ポインタであればなぜかエラーが発生せずに実行できます。あとで勉強しなおす必要があります…。
+	RichButton* m_pStartRichButton;
+	RichButton* m_pRankingRichButton;
+
+	//RichButton button1{ U"🏆"_emoji };
+	//RichButton button2{ U"↩️"_emoji };
+	//RichButton button3{ U"🎮"_emoji };
+	//RichButton button4{ U"✉️"_emoji };
+	//RichButton button1;
+	//RichButton button2{ U"↩️"_emoji };
+	//RichButton button3{ U"🎮"_emoji };
+	//RichButton button4{ U"✉️"_emoji };
 };

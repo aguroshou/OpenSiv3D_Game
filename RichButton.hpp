@@ -42,6 +42,8 @@ public:
 
 	void draw(const Rect& rect, /*const Texture& buttonTexture, */const Font& font, const String& text);
 
+	bool m_isMouseOver;
+
 private:
 
 	Texture m_emoji;
@@ -64,20 +66,16 @@ private:
 //	//const Texture buttonTexture = CreateButtonTexture();
 //	const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
 //
-//	RichButton button1{ U"🏆"_emoji };
-//	RichButton button2{ U"↩️"_emoji };
-//	RichButton button3{ U"🎮"_emoji };
-//	RichButton button4{ U"✉️"_emoji };
-//
-//	while (System::Update())
-//	{
-//		button1.draw(Rect{ 40, 500, 160, 60 }, font, U"ランキング");
-//		button2.draw(Rect{ 220, 500, 160, 60 }, font, U"もどる");
-//		button3.draw(Rect{ 400, 500, 160, 60 }, font, U"あそぶ");
-//		button4.draw(Rect{ 580, 500, 160, 60 }, font, U"とうろく");
-//		//button1.draw(Rect{ 40, 500, 160, 60 }, buttonTexture, font, U"ランキング");
-//		//button2.draw(Rect{ 220, 500, 160, 60 }, buttonTexture, font, U"もどる");
-//		//button3.draw(Rect{ 400, 500, 160, 60 }, buttonTexture, font, U"あそぶ");
-//		//button4.draw(Rect{ 580, 500, 160, 60 }, buttonTexture, font, U"とうろく");
-//	}
+	//RichButton button1{ U"🏆"_emoji };
+	//RichButton button2{ U"↩️"_emoji };
+	//RichButton button3{ U"🎮"_emoji };
+	//RichButton button4{ U"✉️"_emoji };
+
+	//while (System::Update())
+	//{
+	//	button1.draw(Rect{ 40, 500, 160, 60 }, font, U"ランキング");
+	//	button2.draw(Rect{ 220, 500, 160, 60 }, font, U"もどる");
+	//	button3.draw(Rect{ 400, 500, 160, 60 }, font, U"あそぶ");
+	//	button4.draw(Rect{ 580, 500, 160, 60 }, font, U"とうろく");
+	//}
 //}
