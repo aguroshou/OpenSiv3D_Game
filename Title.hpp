@@ -31,7 +31,9 @@ private:
 
 	const Texture titleTexture{ U"images/title.png" };
 
-	const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
+	//const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
+	//const Font font{ 50,  };
+	const Font font{ 48, U"images/DelaGothicOne-Regular.ttf" };
 
 	Rect m_StartRect{ 220, 415, 160, 60 };
 	Rect m_RankingRect{ 220, 520, 160, 60 };

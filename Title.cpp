@@ -40,6 +40,7 @@ void Title::draw() const
 
 	m_pStartRichButton->draw(m_StartRect, font, U"あそぶ");
 	m_pRankingRichButton->draw( m_RankingRect, font, U"ランキング");
+	// 
 	//button2.draw(Rect{ 220, 500, 160, 60 }, font, U"もどる");
 	//button3.draw(Rect{ 400, 500, 160, 60 }, font, U"あそぶ");
 	//button4.draw(Rect{ 580, 500, 160, 60 }, font, U"とうろく");
