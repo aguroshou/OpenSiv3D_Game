@@ -36,7 +36,9 @@ void Title::update()
 
 void Title::draw() const
 {
-	Scene::SetBackground(ColorF{ 0.2, 0.8, 0.4 });
+	Scene::SetBackground(ColorF{ 0, 0, 0 });
+
+	titleTexture.resized(1280).draw(0, 0);
 
 	FontAsset(U"Menu")(U"モグラ逃し")
 		.drawAt(TextStyle::OutlineShadow(0.2, ColorF{ 0.2, 0.6, 0.2 }, Vec2{ 3, 3 }, ColorF{ 0.0, 0.5 }), 100, Vec2{ 400, 100 });
@@ -48,4 +50,9 @@ void Title::draw() const
 	FontAsset(U"Menu")(U"PLAY").drawAt(m_startButton.center(), ColorF{ 0.25 });
 	FontAsset(U"Menu")(U"RANKING").drawAt(m_rankingButton.center(), ColorF{ 0.25 });
 	FontAsset(U"Menu")(U"EXIT").drawAt(m_exitButton.center(), ColorF{ 0.25 });
+
+	button1.draw(Rect{ 40, 500, 160, 60 }, font, U"ランキング");
+	button2.draw(Rect{ 220, 500, 160, 60 }, font, U"もどる");
+	button3.draw(Rect{ 400, 500, 160, 60 }, font, U"あそぶ");
+	button4.draw(Rect{ 580, 500, 160, 60 }, font, U"とうろく");
 }

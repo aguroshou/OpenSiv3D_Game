@@ -118,6 +118,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Ranking.cpp" />
+    <ClCompile Include="RichButton.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -321,6 +322,7 @@
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="Ranking.hpp" />
+    <ClInclude Include="RichButton.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Title.hpp" />
     <ClInclude Include="Url.hpp" />

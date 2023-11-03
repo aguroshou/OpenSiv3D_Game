@@ -1,5 +1,6 @@
 ﻿# pragma once
 # include "Common.hpp"
+# include "RichButton.hpp"
 
 // タイトルシーン
 class Title : public App::Scene
@@ -26,4 +27,12 @@ private:
 	const Audio titleBgmAudio{ Audio::Stream, U"sounds/titleBgm.wav" };
 
 	const Texture titleTexture{ U"images/title.png" };
+
+	const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
+
+public:
+	RichButton button1{ U"🏆"_emoji };
+	RichButton button2{ U"↩️"_emoji };
+	RichButton button3{ U"🎮"_emoji };
+	RichButton button4{ U"✉️"_emoji };
 };
