@@ -1,7 +1,5 @@
 ﻿# include "Game.hpp"
 
-
-
 Game::Game(const InitData& init)
 	: IScene{ init }
 {
@@ -205,9 +203,79 @@ void Game::update()
 			(aType == BodyType::ENEMY && bType == BodyType::PLAYER))
 		{
 			enemyHitAudio.playOneShot(0.1);
-			// ランキング画面へ
-			changeScene(State::Ranking);
-			getData().lastGameScore = score;
+			playerHitPoint--;
+			if (playerHitPoint == 0)
+			{
+				// ランキング画面へ
+				changeScene(State::Ranking);
+				getData().lastGameScore = score;
+			}
+			else
+			{
+				if (playerHitPoint == 1)
+				{
+					playerHitPoint1Audio.playOneShot(0.2);
+				}
+
+				// FIXME: ITEMのときと同じ処理なので、関数にまとめたほうが良さそうです。
+				if (aType == BodyType::ENEMY)
+				{
+					P2Body* pTmpBody = pA;
+					pA = pB;
+					pB = pTmpBody;
+				}
+
+				pA->release();
+				pB->release();
+
+				// FIXME: IndexとIteratorの両方を必要としているため、冗長なプログラムとなってしまっています。
+				// Array<P2Body>のIndex←→Iteratorの値を取得する関数は無いようなので、作成する必要があるかもしれません。
+				int playerAnimalIndex = 0;
+				for (auto playerAnimalIt = playerAnimals.begin(); playerAnimalIt != playerAnimals.end();)
+				{
+					if (const_cast<P2Body*>(&(*playerAnimalIt)) == const_cast<P2Body*>(&(*pA)))
+					{
+						// ドラッグ中のプレイヤーが削除される場合は、ドラッグを中止します。
+						//if (const_cast<P2Body*>(&(*playerAnimalIt)) == const_cast<P2Body*>(&playerAnimals[grabAnimalIndex]))
+						if (playerAnimalIndex == grabAnimalIndex)
+						{
+							isGrabbing = false;
+							grabAnimalIndex = 0;
+						}
+						// ドラッグ中のプレイヤーの番号よりも、削除されるプレイヤーの番号が小さい場合は、配列の番号の変更(-1)に対応します。
+						else if (playerAnimalIndex < grabAnimalIndex)
+						{
+							grabAnimalIndex--;
+						}
+
+						// 現在のイテレータが指す要素を削除し、イテレータを進める
+						playerAnimals.erase(playerAnimalIt);
+						pA = NULL;
+						break;
+					}
+					else
+					{
+						++playerAnimalIt;
+					}
+					playerAnimalIndex++;
+				}
+
+				for (auto enemyIt = enemyAnimals.begin(); enemyIt != enemyAnimals.end();)
+				{
+					if (const_cast<P2Body*>(&(*enemyIt)) == const_cast<P2Body*>(&(*pB)))
+					{
+						// 現在のイテレータが指す要素を削除し、イテレータを進める
+						enemyAnimals.erase(enemyIt);
+						pB = NULL;
+						break;
+					}
+					else
+					{
+						++enemyIt;
+					}
+				}
+			}
+
 		}
 		else if ((aType == BodyType::PLAYER && bType == BodyType::ITEM) ||
 			(aType == BodyType::ITEM && bType == BodyType::PLAYER))
@@ -352,13 +420,15 @@ void Game::draw() const
 		}
 	}
 
-	font(U"SCORE:{}"_fmt(score)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
+	font(U"もぐら：{}"_fmt(playerHitPoint)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
+	font(U"レベル：{}"_fmt(0)).draw(450, 5, ColorF{ 1.0, 0.5, 0.0 });
+	font(U"スコア：{}"_fmt(score)).draw(850, 5, ColorF{ 1.0, 0.5, 0.0 });
 	//double tmpPrecisionValue = Precision(spawnPlayerIntervalTimeMax - spawnPlayerTimer.sF(), 1);
 	double tmpPrecisionValue = std::round((spawnPlayerIntervalTimeMax - spawnPlayerTimer.sF()) * 10) / 10.0; // 小数点以下1桁までに制限
-	font(U"PLAYER:{}"_fmt(tmpPrecisionValue)).draw(500, 5, ColorF{ 1.0, 0.5, 0.0 });
+	//font(U"PLAYER:{}"_fmt(tmpPrecisionValue)).draw(500, 5, ColorF{ 1.0, 0.5, 0.0 });
 	tmpPrecisionValue = std::round((spawnEnemyIntervalTimeMax - spawnEnemyTimer.sF()) * 10) / 10.0; // 小数点以下1桁までに制限
 
-	font(U"ENEMY:{}"_fmt(tmpPrecisionValue)).draw(1000, 5, ColorF{ 1.0, 0.5, 0.0 });
+	//font(U"ENEMY:{}"_fmt(tmpPrecisionValue)).draw(1000, 5, ColorF{ 1.0, 0.5, 0.0 });
 }
 
 P2Body* Game::findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList)
@@ -416,7 +486,7 @@ Vec2 Game::GetRandomPositionWithSafety(const Array<P2Body>& otherBodies) {
 	int32 retryCount = 0;
 	while (!isSafe) {
 		isSafe = true;
-		randomPosition = RandomVec2(1280, 720);
+		randomPosition = RandomVec2(1280, 640) + Vec2(0, 80);
 		for (const P2Body otherBody : otherBodies) {
 			if (otherBody.getPos().distanceFrom(randomPosition) < radius) {
 				isSafe = false; // 他の座標と重なる

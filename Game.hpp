@@ -45,6 +45,8 @@ private:
 	P2World world;
 	Array<P2Body>  walls;
 
+	int32 playerHitPoint = 3;
+
 	const double playerAnimalRadius = 20;
 	//Array<P2Body> playerAnimals;
 	Array<P2Body> playerAnimals;
@@ -60,7 +62,9 @@ private:
 	Array<P2Body> enemyAnimals;
 
 	// 基本サイズ 50 のフォントを作成
-	const Font font{ 50 };
+	//const Font font{ 50 };
+	const Font font{ 48, U"images/DelaGothicOne-Regular.ttf" };
+
 
 	// 詳しい仕組みを理解できていませんが、カメラ座標を(640, 360)とすることで、Cursor::PosF()とplayerAnimals[0].getPos()の座標が一致するようです。
 	// そのため、カメラの座標・ズームなどを変更してしまうと不具合が発生してしまいます。
@@ -101,6 +105,7 @@ private:
 	const Audio dropMoveAudio{ U"sounds/dropMove.wav" };
 	const Audio enemyHitAudio{ U"sounds/enemyHit.wav" };
 	const Audio goalAudio{ U"sounds/goal.wav" };
+	const Audio playerHitPoint1Audio{ U"sounds/playerHitPoint1.wav" };
 	const Audio gameBgmAudio{ Audio::Stream, U"sounds/gameBgm.wav", Loop::Yes };
 
 };
