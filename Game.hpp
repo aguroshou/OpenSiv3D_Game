@@ -101,7 +101,7 @@ private:
 	const Audio dropMoveAudio{ U"sounds/dropMove.wav" };
 	const Audio enemyHitAudio{ U"sounds/enemyHit.wav" };
 	const Audio goalAudio{ U"sounds/goal.wav" };
-	const Audio gameBgmAudio{ Audio::Stream, U"sounds/gameBgm.wav" };
+	const Audio gameBgmAudio{ Audio::Stream, U"sounds/gameBgm.wav", Loop::Yes };
 
 };
 

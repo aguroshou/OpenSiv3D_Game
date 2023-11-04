@@ -27,12 +27,10 @@ private:
 	Rect m_exitButton{ Arg::center = Scene::Center().movedBy(0, 200), 300, 60 };
 	Transition m_rankingTransition{ 0.4s, 0.2s };
 
-	const Audio titleBgmAudio{ Audio::Stream, U"sounds/titleBgm.wav" };
+	const Audio titleBgmAudio{ Audio::Stream, U"sounds/titleBgm.wav", Loop::Yes };
 
 	const Texture titleTexture{ U"images/title.png" };
 
-	//const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
-	//const Font font{ 50,  };
 	const Font font{ 48, U"images/DelaGothicOne-Regular.ttf" };
 
 	Rect m_StartRect{ 220, 415, 160, 60 };
@@ -42,12 +40,5 @@ private:
 	RichButton* m_pStartRichButton;
 	RichButton* m_pRankingRichButton;
 
-	//RichButton button1{ U"🏆"_emoji };
-	//RichButton button2{ U"↩️"_emoji };
-	//RichButton button3{ U"🎮"_emoji };
-	//RichButton button4{ U"✉️"_emoji };
-	//RichButton button1;
-	//RichButton button2{ U"↩️"_emoji };
-	//RichButton button3{ U"🎮"_emoji };
-	//RichButton button4{ U"✉️"_emoji };
+	const Audio clickAudio{ Audio::Stream, U"sounds/click.wav" };
 };
