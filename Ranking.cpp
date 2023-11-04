@@ -517,8 +517,8 @@ Ranking::Ranking(const InitData& init)
 
 	// Google Apps Script の URL（サンプル用の URL. 定期的に記録がクリアされます）
 	// 実行ファイルに URL が直接埋め込まれるのを防ぐため、SIV3D_OBFUSCATE() で URL を難読化
-	const std::string url{ SIV3D_OBFUSCATE("https://script.google.com/macros/s/AKfycby-oJycoQPkdumtPjNYoXej1hRB-BjZaa9ZgnfHHesdMkqbY6TeW3h9fctIxXeIPM2A/exec") };
-	const URL LeaderboardURL = Unicode::Widen(url);
+	//const std::string url{ SIV3D_OBFUSCATE("https://script.google.com/macros/s/AKfycby-oJycoQPkdumtPjNYoXej1hRB-BjZaa9ZgnfHHesdMkqbY6TeW3h9fctIxXeIPM2A/exec") };
+	//const URL LeaderboardURL = Unicode::Widen(url);
 
 	// リーダーボードを取得するタスク
 	leaderboardGetTask = CreateGetTask(LeaderboardURL);
@@ -607,7 +607,7 @@ void Ranking::update()
 			if (ReadLeaderboard(leaderboardGetTask->getAsJSON(), leaderboard))
 			{
 				// リーダーボードを表示するテーブルの内容を更新する
-				table = ToTable(leaderboard);
+				//table = ToTable(leaderboard);
 
 				// リーダーボードの内容を追加する
 
@@ -634,20 +634,20 @@ void Ranking::update()
 		const auto& record = leaderboard[i];
 
 		//font(U"rank: {}, name: {}, score: {}"_fmt((i + 1), record.userName, record.score)).draw(20, Vec2{ 40, (100 + i * 30) }, ColorF{ 0.11 });
-		font(U"{}"_fmt(record.userName)).draw(20, Vec2{ 840, (100 + i * 30) }, ColorF{ 0.11 });
-		font(U"<{}>"_fmt(record.score)).draw(20, Vec2{ 540, (100 + i * 30) }, ColorF{ 0.11 });
+		font(U"{}"_fmt(record.userName)).draw(20, Vec2{ 820, (185 + i * 50) }, ColorF{ 0.11 });
+		font(U"<{}>"_fmt(record.score)).draw(20, Vec2{ 1050, (185 + i * 50) }, ColorF{ 0.11 });
 	}
 
 	// リーダーボードを描画する
-	if (table)
-	{
-		table.draw({ 40, 100 });
-	}
-	else
-	{
-		// リーダーボードが空の場合は、ロード中であることを示すアニメーションを描画する
-		Circle{ 292, 260, 80 }.drawArc((Scene::Time() * 90_deg), 300_deg, 10, 0);
-	}
+	//if (table)
+	//{
+	//	table.draw({ 40, 100 });
+	//}
+	//else
+	//{
+	//	// リーダーボードが空の場合は、ロード中であることを示すアニメーションを描画する
+	//	Circle{ 292, 260, 80 }.drawArc((Scene::Time() * 90_deg), 300_deg, 10, 0);
+	//}
 }
 
 void Ranking::draw() const

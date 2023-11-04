@@ -81,6 +81,7 @@
 # pragma once
 # include "Common.hpp"
 # include "RichButton.hpp"
+# include "Url.hpp"
 
 // ランキングシーン
 class Ranking : public App::Scene
@@ -130,8 +131,18 @@ private:
 	RichButton* m_pBackRichButton;
 
 
-
+#ifdef URL_HEADER
+	// 念のためにURLは公開リポジトリへアップロードしないようにしています。
+	const std::string url{ SIV3D_OBFUSCATE(SPREAD_SHEET_URL) };
+#else
+	// FIXME: 下記リポジトリに掲載されている、スプレッドシートのURLを掲載していますが、別の方が実装する際には修正する必要があります。
+	//https://github.com/Siv3D/Siv3D-Samples/tree/main/Samples/Leaderboard
+	// Google Apps Script の URL（サンプル用の URL. 定期的に記録がクリアされます）
+	// 実行ファイルに URL が直接埋め込まれるのを防ぐため、SIV3D_OBFUSCATE() で URL を難読化
 	const std::string url{ SIV3D_OBFUSCATE("https://script.google.com/macros/s/AKfycby-oJycoQPkdumtPjNYoXej1hRB-BjZaa9ZgnfHHesdMkqbY6TeW3h9fctIxXeIPM2A/exec") };
+#endif
+
+	//const std::string url{ SIV3D_OBFUSCATE("https://script.google.com/macros/s/AKfycby-oJycoQPkdumtPjNYoXej1hRB-BjZaa9ZgnfHHesdMkqbY6TeW3h9fctIxXeIPM2A/exec") };
 	const URL LeaderboardURL = Unicode::Widen(url);
 
 	// リーダーボードを表示するテーブル
