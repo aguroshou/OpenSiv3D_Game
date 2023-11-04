@@ -1,28 +1,32 @@
 ﻿# pragma once
 # include "Common.hpp"
 # include "RichButton.hpp"
-
-// スプレッドシートへのURLを記載しているヘッダーです。
-// .gitignoreに追加しているため、使用できない場合はコメントアウトしてください。
 # include "Url.hpp"
-
-/// @brief レコード
-struct Record
-{
-	/// @brief ユーザー名
-	String userName;
-
-	/// @brief スコア
-	double score;
-
-	/// @brief 追加の情報（このサンプルでは特に使いません）
-	JSON data;
-};
 
 // ランキングシーン
 class Ranking : public App::Scene
 {
+private:
+	/// @brief レコード
+	struct Record
+	{
+		/// @brief ユーザー名
+		String userName;
+
+		/// @brief スコア
+		int32 score;
+
+		/// @brief 追加の情報（このサンプルでは特に使いません）
+		JSON data;
+	};
+
 public:
+
+	bool IsValidRecord(const JSON& value);
+	bool ReadLeaderboard(const JSON& json, Array<Record>& dst);
+	SimpleTable ToTable(const Array<Record>& leaderboard);
+	AsyncHTTPTask CreateGetTask(const URLView url, int32 count = 10);
+	AsyncHTTPTask CreatePostTask(const URLView url, const StringView userName, double score, JSON additionalData = JSON::Invalid());
 
 	Ranking(const InitData& init);
 	~Ranking();
@@ -32,10 +36,19 @@ public:
 	void draw() const override;
 
 private:
-
 	static constexpr int32 RankingCount = 5;
 
 	int32 m_rank = -1;
+
+	Rect m_SubscribeRect{ 220, 415, 160, 60 };
+	Rect m_BackRect{ 220, 520, 160, 60 };
+
+	const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
+
+	const Texture rankingTexture{ U"images/ranking.png" };
+
+	RichButton* m_pSubscribeRichButton;
+	RichButton* m_pBackRichButton;
 
 
 #ifdef URL_HEADER
@@ -51,19 +64,20 @@ private:
 
 	const URL LeaderboardURL = Unicode::Widen(url);
 
-	const Font font{ FontMethod::MSDF, 48 };
+	// リーダーボードを表示するテーブル
+	SimpleTable table;
 
 	// リーダーボードを取得するタスク
-	Optional<AsyncHTTPTask> leaderboardGetTask; // = CreateGetTask(LeaderboardURL);
+	Optional<AsyncHTTPTask> leaderboardGetTask;/* = CreateGetTask(LeaderboardURL);*/
 
 	// スコアを送信するタスク
-	Optional<AsyncTask<HTTPResponse>> scorePostTask;
+	Optional<AsyncHTTPTask> scorePostTask;
 
 	// 自身のユーザ名
 	String userName;
 
 	// 自身のスコア
-	double score;
+	double score = 0;
 
 	// 最後にリーダーボードを取得した時刻
 	DateTime lastUpdateTime{ 2023, 1, 1 };
@@ -74,18 +88,4 @@ private:
 	Array<Record> leaderboard;
 
 	TextEditState userNameTextBox;
-
-	Rect m_SubscribeRect{ 220, 415, 160, 60 };
-	Rect m_BackRect{ 220, 520, 160, 60 };
-
-	//const Font font{ FontMethod::MSDF, 48, Typeface::Heavy };
-
-	const Texture rankingTexture{ U"images/ranking.png" };
-
-	RichButton* m_pSubscribeRichButton;
-	RichButton* m_pBackRichButton;
 };
-
-
-
-

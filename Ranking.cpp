@@ -1,9 +1,82 @@
 ﻿# include "Ranking.hpp"
+# include <emscripten.h>
+
+namespace s3d::detail
+{
+	__attribute__((import_name("siv3dCreateXMLHTTPRequest")))
+		extern int32 siv3dCreateXMLHTTPRequest();
+	__attribute__((import_name("siv3dSetXMLHTTPRequestCallback")))
+		extern void siv3dSetXMLHTTPRequestCallback(int32 id, void(*callback)(int32, void*), void* userData);
+	__attribute__((import_name("siv3dSetXMLHTTPRequestErrorCallback")))
+		extern void siv3dSetXMLHTTPRequestErrorCallback(int32 id, void(*callback)(int32, void*), void* userData);
+	__attribute__((import_name("siv3dSetXMLHTTPRequestRequestHeader")))
+		extern void siv3dSetXMLHTTPRequestRequestHeader(int32 id, const char* name, const char* value);
+	__attribute__((import_name("siv3dGetXMLHTTPRequestResponseHeaders")))
+		extern char* siv3dGetXMLHTTPRequestResponseHeaders(int32 id);
+	__attribute__((import_name("siv3dSendXMLHTTPRequest")))
+		extern void siv3dSendXMLHTTPRequest(int32 id, const char* data);
+	__attribute__((import_name("siv3dOpenXMLHTTPRequest")))
+		extern void siv3dOpenXMLHTTPRequest(int32 id, const char* method, const char* url);
+}
+
+/// @brief POST メソッドで Web サーバにリクエストを送ります。
+/// @param url URL
+/// @param headers ヘッダ
+/// @param src 送信するデータの先頭ポインタ
+/// @param size 送信するデータのサイズ（バイト）
+/// @return レスポンスを待つタスク
+/// @pre SIV3D_ENGINE(Network)->init() が呼び出されていること。
+AsyncTask<HTTPResponse> SimplePostAsync(URLView url, const HashTable<String, String>& headers, const void* src, size_t size)
+{
+	// ネットワークのエンジンが初期化されていることを事前条件にする
+	// SIV3D_ENGINE(Network)->init();
+
+	const auto wgetHandle = detail::siv3dCreateXMLHTTPRequest();
+
+	detail::siv3dOpenXMLHTTPRequest(wgetHandle, "POST", url.toUTF8().data());
+
+	for (auto&& [key, value] : headers)
+	{
+		detail::siv3dSetXMLHTTPRequestRequestHeader(wgetHandle, key.toUTF8().data(), value.toUTF8().data());
+	}
+
+	constexpr auto CallBack = [](int32 requestID, void* userData)
+		{
+			char* responseHeader = detail::siv3dGetXMLHTTPRequestResponseHeaders(requestID);
+			HTTPResponse response{ std::string(responseHeader) };
+			::free(responseHeader);
+
+			auto promise = static_cast<std::promise<HTTPResponse>*>(userData);
+			promise->set_value(response);
+			delete promise;
+
+			EM_ASM("setTimeout(function() { _siv3dMaybeAwake(); }, 0)");
+		};
+
+	auto promise = new std::promise<HTTPResponse>;
+	AsyncTask<HTTPResponse> task = promise->get_future();
+	detail::siv3dSetXMLHTTPRequestCallback(wgetHandle, CallBack, promise);
+	detail::siv3dSetXMLHTTPRequestErrorCallback(wgetHandle, CallBack, promise);
+
+	if (src)
+	{
+		std::string body(static_cast<const char*>(src), size);
+		detail::siv3dSendXMLHTTPRequest(wgetHandle, body.data());
+	}
+	else
+	{
+		detail::siv3dSendXMLHTTPRequest(wgetHandle, nullptr);
+	}
+
+	return task;
+}
+
+
 
 /// @brief 有効なレコードかどうかをチェックします。
 /// @param value レコードが格納された JSON
 /// @return 有効なレコードなら true, そうでなければ false
-bool Ranking::IsValidRecord(const JSON& value)
+bool IsValidRecord(const JSON& value)
 {
 	return (value.isObject()
 		&& value.hasElement(U"username")
@@ -17,7 +90,7 @@ bool Ranking::IsValidRecord(const JSON& value)
 /// @param dst 更新するリーダーボード
 /// @remark 読み込みに失敗した場合、dst は更新されません。
 /// @return 読み込みに成功したら true, 失敗したら false
-bool Ranking::ReadLeaderboard(const JSON& json, Array<Record>& dst)
+bool ReadLeaderboard(const JSON& json, Array<Record>& dst)
 {
 	if (not json.isArray())
 	{
@@ -36,12 +109,6 @@ bool Ranking::ReadLeaderboard(const JSON& json, Array<Record>& dst)
 		Record record;
 		record.userName = value[U"username"].get<String>();
 		record.score = value[U"score"].get<double>();
-
-		if (value.contains(U"data"))
-		{
-			record.data = value[U"data"];
-		}
-
 		leaderboard << std::move(record);
 	}
 
@@ -53,12 +120,12 @@ bool Ranking::ReadLeaderboard(const JSON& json, Array<Record>& dst)
 /// @param url サーバの URL
 /// @param count 取得上限数
 /// @return タスク
-AsyncHTTPTask Ranking::CreateGetTask(const URLView url, int32 count)
+AsyncHTTPTask CreateGetTask(const URLView url, int32 count = 10)
 {
 	// GET リクエストの URL を作成する
 	const URL requestURL = U"{}?count={}"_fmt(url, count);
 
-	return SimpleHTTP::GetAsync(requestURL, {});
+	return SimpleHTTP::SaveAsync(requestURL, U"/leaderboard.json");
 }
 
 /// @brief サーバにスコアを送信するタスクを作成します。
@@ -67,7 +134,7 @@ AsyncHTTPTask Ranking::CreateGetTask(const URLView url, int32 count)
 /// @param score スコア
 /// @param additionalData 追加の情報
 /// @return タスク
-AsyncHTTPTask Ranking::CreatePostTask(const URLView url, const StringView userName, double score, JSON additionalData)
+AsyncTask<HTTPResponse> CreatePostTask(const URLView url, const StringView userName, double score, JSON additionalData = JSON::Invalid())
 {
 	// POST リクエストの URL を作成する
 	URL requestURL = U"{}?username={}&score={}"_fmt(url, PercentEncode(userName), PercentEncode(Format(score)));
@@ -77,13 +144,36 @@ AsyncHTTPTask Ranking::CreatePostTask(const URLView url, const StringView userNa
 		requestURL += (U"&data=" + PercentEncode(additionalData.formatMinimum()));
 	}
 
-	const HashTable<String, String> headers =
-	{
-		{ U"Content-Type", U"application/x-www-form-urlencoded; charset=UTF-8" }
-	};
-
-	return SimpleHTTP::PostAsync(requestURL, headers, nullptr, 0);
+	return SimplePostAsync(requestURL, {}, nullptr, 0);
 }
+
+///// @brief ランダムなスコアを返します。
+///// @return ランダムなスコア
+//double MakeRandomScore()
+//{
+//	return (Random(10000) / 100.0);
+//}
+//
+///// @brief ランダムなユーザー名を作成します。
+///// @return ランダムなユーザー名
+//String MakeRandomUserName()
+//{
+//	static const Array<String> words1 =
+//	{
+//		U"Blue", U"Red", U"Green", U"Silver", U"Gold",
+//		U"Happy", U"Angry", U"Sad", U"Exciting", U"Scary",
+//		U"Big", U"Small", U"Large", U"Tiny", U"Short",
+//	};
+//
+//	static const Array<String> words2 =
+//	{
+//		U"Lion", U"Dragon", U"Tiger", U"Eagle", U"Shark",
+//		U"Pizza", U"Curry", U"Ramen", U"Sushi", U"Salad",
+//		U"Cat", U"Dog", U"Mouse", U"Rabbit", U"Fox",
+//	};
+//
+//	return (U"{} {} {:0>4}"_fmt(words1.choice(), words2.choice(), Random(9999)));
+//}
 
 Ranking::Ranking(const InitData& init)
 	: IScene{ init }
@@ -92,34 +182,45 @@ Ranking::Ranking(const InitData& init)
 
 	if (data.lastGameScore)
 	{
-		score = *data.lastGameScore;
-
-		const int32 lastScore = *data.lastGameScore;
-
+		//const int32 lastScore = *data.lastGameScore;
 
 		// ランキングを再構成
-		data.highScores << lastScore;
-		data.highScores.rsort();
-		data.highScores.resize(RankingCount);
+		//data.highScores << lastScore;
+		//data.highScores.rsort();
+		//data.highScores.resize(RankingCount);
 
-		// ランクインしていたら m_rank に順位をセット
-		for (int32 i = 0; i < RankingCount; ++i)
-		{
-			if (data.highScores[i] == lastScore)
-			{
-				m_rank = i;
-				break;
-			}
-		}
+		//// ランクインしていたら m_rank に順位をセット
+		//for (int32 i = 0; i < RankingCount; ++i)
+		//{
+		//	if (data.highScores[i] == lastScore)
+		//	{
+		//		m_rank = i;
+		//		break;
+		//	}
+		//}
+
+		score = *data.lastGameScore;
 
 		data.lastGameScore.reset();
 	}
+	else
+	{
+		score = 0;
+	}
 
-	m_pSubscribeRichButton = new RichButton(U"✉️"_emoji);
-	m_pBackRichButton = new RichButton(U"↩️"_emoji);
+	Scene::SetBackground(ColorF{ 0 });
 
 	// リーダーボードを取得するタスク
 	leaderboardGetTask = CreateGetTask(LeaderboardURL);
+
+	userNameTextBox.text = (U"");
+	//userName = (U"");
+	//userName = MakeRandomUserName();
+
+	//score = MakeRandomScore();
+
+	m_pSubscribeRichButton = new RichButton(U"✉️"_emoji);
+	m_pBackRichButton = new RichButton(U"↩️"_emoji);
 
 	userNameTextBox.text = U"ななし";
 }
@@ -132,52 +233,64 @@ Ranking::~Ranking()
 
 void Ranking::update()
 {
+
 	rankingTexture.resized(1280).draw(0, 0);
 
-	font(U"なまえ").draw(20, Vec2{ 150, 300 }, ColorF{ 0.11 });
-	font(U"スコア <{}>"_fmt(score)).draw(20, Vec2{ 150, 250 }, ColorF{ 0.11 });
-	
-	SimpleGUI::TextBox(userNameTextBox, Vec2{ 220, 297 }, 220, 10, !isScorePosted);
-
-	//if (m_BackRect.leftClicked())
-	//{
-	//	changeScene(State::Title);
-	//}
+	m_pSubscribeRichButton->draw(m_SubscribeRect, font, U"とうろく");
+	m_pBackRichButton->draw(m_BackRect, font, U"もどる");
 
 	// 通信が完了しているか
 	const bool isReady = (not leaderboardGetTask) && (not scorePostTask);
 
-	//// 自身のユーザー名を更新する
+	// 自身のユーザー名を更新する
 	//if (SimpleGUI::Button(U"\U000F0004 {}"_fmt(userName), Vec2{ 40, 40 }, 330))
 	//{
+	//	userName = MakeRandomUserName();
 	//	isScorePosted = false;
 	//}
 
-	//// 自身のスコアを更新する
-	//if (SimpleGUI::Button(U"\U000F0AE2 {}"_fmt(score), Vec2{ 384, 40 }, 160))
+	font(U"なまえ").draw(20, Vec2{ 150, 300 }, ColorF{ 0.11 });
+	font(U"スコア <{}>"_fmt(score)).draw(20, Vec2{ 150, 250 }, ColorF{ 0.11 });
+
+	SimpleGUI::TextBox(userNameTextBox, Vec2{ 220, 297 }, 220, 10, !isScorePosted);
+
+	//font(U"↓15文字以内で名前を入力してください。").draw(20, Vec2{ 40, 10 }, ColorF{ 0.11 });
+
+	//if (isScorePosted)
 	//{
-	//	isScorePosted = false;
+	//	SimpleGUI::TextBox(userNameTextBox, Vec2{ 40, 40 }, 330, 15, !isScorePosted);
+	//}
+	//else
+	//{
+	//	SimpleGUI::TextBox(userNameTextBox, Vec2{ 40, 40 }, 330, 15, true);
 	//}
 
-	//// 現在のスコアを送信する
-	//if (SimpleGUI::Button(U"\U000F0415 Submit", { 560, 40 }, 160, (isReady && (not isScorePosted))))
-	//{
-	//	scorePostTask = CreatePostTask(LeaderboardURL, userName, score);
-	//}
 
-	if (m_SubscribeRect.leftClicked() && isReady && (not isScorePosted))
+	// 自身のスコアを更新する
+	//if (SimpleGUI::Button(U"SCORE:{}"_fmt(score), Vec2{ 384, 40 }, 160, false))
+	//{
+	//	//score = MakeRandomScore();
+	//	//isScorePosted = false;
+	//}
+	//font(U"SCORE:{}"_fmt(score)).draw(20, Vec2{ 384, 40 }, ColorF{ 0.11 });
+
+	// 現在のスコアを送信する
+	//if (SimpleGUI::Button(U"ランキング登録", { 560, 40 }, 160, (isReady && (not isScorePosted) && (userNameTextBox.text != (U"")) && score != 0)))
+	if (m_SubscribeRect.leftClicked() && not isScorePosted)
 	{
-		scorePostTask = CreatePostTask(LeaderboardURL, userName, score);
+		//scorePostTask = CreatePostTask(LeaderboardURL, userName, score);
+		scorePostTask = CreatePostTask(LeaderboardURL, userNameTextBox.text, score);
 	}
-	else if (m_BackRect.leftClicked())
+
+	//if (SimpleGUI::Button(U"タイトルへ戻る", { 860, 40 }, 160, true))
+	if (m_BackRect.leftClicked())
 	{
-		// ランキングシーンへ
+		// タイトルシーンへ
 		changeScene(State::Title);
 	}
 
-
 	// リーダーボードを更新する
-	//if (SimpleGUI::Button(U"\U000F0453 Refresh", { 560, 100 }, 160, isReady))
+	//if (SimpleGUI::Button(U"ランキング更新", { 560, 100 }, 160, isReady))
 	//{
 	//	leaderboardGetTask = CreateGetTask(LeaderboardURL);
 	//}
@@ -188,7 +301,7 @@ void Ranking::update()
 	// スコア送信処理が完了したら
 	if (scorePostTask && scorePostTask->isReady())
 	{
-		if (const auto response = scorePostTask->getResponse();
+		if (const auto response = scorePostTask->get();
 			response.isOK())
 		{
 			// スコアを送信済みにし、再送信できないようにする
@@ -211,33 +324,46 @@ void Ranking::update()
 		if (const auto response = leaderboardGetTask->getResponse();
 			response.isOK())
 		{
-			if (ReadLeaderboard(leaderboardGetTask->getAsJSON(), leaderboard))
+			if (ReadLeaderboard(JSON::Load(U"/leaderboard.json"), leaderboard))
 			{
 				// 最後にリーダーボードを取得した時刻を更新する
-				//lastUpdateTime = DateTime::Now();
+				lastUpdateTime = DateTime::Now();
 			}
 			else
 			{
-				//Print << U"Failed to read the leaderboard.";
+				Print << U"Failed to read the leaderboard.";
 			}
 		}
+
 		leaderboardGetTask.reset();
 	}
 
-	int32 rankingSize = std::min(static_cast<int32>(leaderboard.size()), 10);
-	for (size_t i = 0; i < rankingSize; ++i)
+	// リーダーボードを描画する
+	if (leaderboard)
 	{
-		const auto& record = leaderboard[i];
+		int32 rankingSize = std::min(static_cast<int32>(leaderboard.size()), 10);
+		for (size_t i = 0; i < rankingSize; ++i)
+		{
+			const auto& record = leaderboard[i];
 
-		font(U"{}"_fmt(record.userName)).draw(20, Vec2{ 820, (185 + i * 50) }, ColorF{ 0.11 });
-		font(U"<{}>"_fmt(record.score)).draw(20, Vec2{ 1050, (185 + i * 50) }, ColorF{ 0.11 });
+			//font(U"rank: {}, name: {}, score: {}"_fmt((i + 1), record.userName, record.score)).draw(20, Vec2{ 40, (100 + i * 30) }, ColorF{ 0.11 });
+			//font(U"{}"_fmt(record.userName)).draw(20, Vec2{ 840, (100 + i * 30) }, ColorF{ 0.11 });
+			//font(U"<{}>"_fmt(record.score)).draw(20, Vec2{ 540, (100 + i * 30) }, ColorF{ 0.11 });
+
+			font(U"{}"_fmt(record.userName)).draw(20, Vec2{ 820, (185 + i * 50) }, ColorF{ 0.11 });
+			font(U"<{}>"_fmt(record.score)).draw(20, Vec2{ 1050, (185 + i * 50) }, ColorF{ 0.11 });
+		}
 	}
+	//else
+	//{
+	//	// リーダーボードが空の場合は、ロード中であることを示すアニメーションを描画する
+	//	Circle{ 292, 260, 80 }.drawArc((Scene::Time() * 90_deg), 300_deg, 10, 0);
+	//}
 }
 
 void Ranking::draw() const
 {
-	Scene::SetBackground(ColorF{ 0, 0, 0 });
-
+	//Scene::SetBackground(ColorF{ 0.4, 0.6, 0.9 });
 
 	//FontAsset(U"Ranking")(U"RANKING").drawAt(400, 60);
 
@@ -259,7 +385,5 @@ void Ranking::draw() const
 	//	}
 	//}
 
-	m_pSubscribeRichButton->draw(m_SubscribeRect, font, U"とうろく");
-	m_pBackRichButton->draw(m_BackRect, font, U"もどる");
-}
 
+}

@@ -18,7 +18,7 @@ void Main()
 	manager.add<Ranking>(State::Ranking);
 
 	// ゲームシーンから開始したい場合はこのコメントを外す
-	manager.init(State::Ranking);
+	//manager.init(State::Ranking);
 
 	// ウィンドウを 1280x720 にリサイズする
 	Window::Resize(1280, 720);
