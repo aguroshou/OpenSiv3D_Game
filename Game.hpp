@@ -61,6 +61,9 @@ private:
 	const double enemyAnimalRadius = 20;
 	Array<P2Body> enemyAnimals;
 
+	const double objectSize = 20;
+	Array<P2Body> objects;
+
 	// 基本サイズ 50 のフォントを作成
 	//const Font font{ 50 };
 	const Font font{ 48, U"images/DelaGothicOne-Regular.ttf" };
@@ -85,12 +88,22 @@ private:
 	double spawnEnemyIntervalTimeMax = 5;
 	double spawnEnemyIntervalAcceleration = -0.1; // 10%ずつスポーン時間が遅くなっていきます。
 
+	Stopwatch spawnObjectTimer;
+	double spawnObjectIntervalTimeMax = 5;
+	double spawnObjectIntervalAcceleration = -1; // 100%ずつスポーン時間が遅くなっていきます。5,10,20,40,80秒後にスポーンします。
+	int32 objectMaxNumber = 5;
+
 	//int32 spawnPlayerCount = 0;
 	//std::vector<int32> spawnPlayerTimes = { 0,10,20,30,40,50 };
 	//int32 spawnPlayerCountInterval = 0;
 
 	//int32 spawnEnemyCount = 0;
 	//std::vector<int32> spawnEnemyTimes = { 0,10,20,30,40,50 };
+
+	// レベルは、ステージ上のモグラの数です。
+	int32 level = 5;
+	// 経験値==レベルとなったときに、レベルが上がります。
+	int32 experiencePoint = 0;
 
 	int32 score = 0;
 
@@ -99,6 +112,9 @@ private:
 	const Texture textureMole{ U"images/mole.png" };
 	const Texture textureHole{ U"images/hole.png" };
 	const Texture textureHammer{ U"images/hammer.png" };
+	const Texture textureGame{ U"images/game.png" };
+	const Texture textureGameMenu{ U"images/gameMenu.png" };
+	const Texture textureRock{ U"images/rock.png" };
 
 	const Audio dragAudio{ U"sounds/drag.wav" };
 	const Audio dropWaitAudio{ U"sounds/dropWait.wav" };

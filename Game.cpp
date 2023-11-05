@@ -14,28 +14,29 @@ Game::Game(const InitData& init)
 	walls << world.createRect(P2Static, Vec2{ 640, 820 }, SizeF{ 1480, 200 }, P2Material{ .density = 20.0, .restitution = 0.0, .friction = 0.0 });
 	walls << world.createRect(P2Static, Vec2{ 1380, 360 }, SizeF{ 200, 920 }, P2Material{ .density = 20.0, .restitution = 0.0, .friction = 0.0 });
 
-	for (int32 index = 0; index < 5; ++index)
-	{
-		enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), enemyAnimalRadius,
-			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-	}
+	//for (int32 index = 0; index < 5; ++index)
+	//{
+	//	enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), enemyAnimalRadius,
+	//		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+	//}
 
-	for (int32 index = 0; index < 5; ++index)
-	{
-		playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
-			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-	}
+	//for (int32 index = 0; index < 5; ++index)
+	//{
+	//	playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
+	//		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+	//}
 
-	for (int32 index = 0; index < 5; ++index)
-	{
-		items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
-			P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
-	}
+	//for (int32 index = 0; index < 5; ++index)
+	//{
+	//	items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
+	//		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+	//}
 
 	oneSecondScoreTimer.start();
 	gameTimer.start();
 	spawnPlayerTimer.start();
 	spawnEnemyTimer.start();
+	spawnObjectTimer.start();
 
 	gameBgmAudio.playOneShot(0.1);
 
@@ -74,14 +75,16 @@ void Game::update()
 	//}
 
 
-	if (spawnPlayerIntervalTimeMax <= spawnPlayerTimer.sF())
+	// 時間ごとにモグラを出現させるプログラムは、保留とします。
+	//if (spawnPlayerIntervalTimeMax <= spawnPlayerTimer.sF())
+	if (playerAnimals.size() < level)
 	{
-		spawnPlayerIntervalTimeMax *= (1 - spawnPlayerIntervalAcceleration);
-		spawnPlayerTimer.restart();
+		//spawnPlayerIntervalTimeMax *= (1 - spawnPlayerIntervalAcceleration);
+		//spawnPlayerTimer.restart();
 		playerAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(enemyAnimals), playerAnimalRadius,
 		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 
-		items << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), itemRadius,
+		items << world.createCircle(P2Static, GetRandomPositionWithSafety(playerAnimals), itemRadius,
 		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 	}
 
@@ -91,6 +94,15 @@ void Game::update()
 		spawnEnemyTimer.restart();
 
 		enemyAnimals << world.createCircle(P2Dynamic, GetRandomPositionWithSafety(playerAnimals), enemyAnimalRadius,
+		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
+	}
+
+	if (spawnObjectIntervalTimeMax <= spawnObjectTimer.sF())
+	{
+		spawnObjectIntervalTimeMax *= (1 - spawnObjectIntervalAcceleration);
+		spawnObjectTimer.restart();
+
+		objects << world.createRect(P2Static, Vec2(Random(13) * 80 + 80 + 40, Random(5) * 80 + 40 + 80 + 80), Vec2(80,80),
 		P2Material{ .density = 40.0, .restitution = 0.0, .friction = 0.0 });
 	}
 
@@ -163,29 +175,32 @@ void Game::update()
 
 	// 1体のプレイヤーに対して、最低1体は敵を近づけるようにします。
 	std::vector<bool> isTargetDecideds(enemyAnimals.size(), false);
-	for (int32 playerIndex = 0; playerIndex < playerAnimals.size(); playerIndex++)
+	if (enemyAnimals.size() >= 1)
 	{
-		int32 minDistanceEnemyIndex = 0;
-		double minEnemyToPlayerDistance = 100000;
-		for (int32 enemyIndex = 0; enemyIndex < enemyAnimals.size(); enemyIndex++)
+		for (int32 playerIndex = 0; playerIndex < playerAnimals.size(); playerIndex++)
 		{
-			if (isTargetDecideds[enemyIndex])
+			int32 minDistanceEnemyIndex = 0;
+			double minEnemyToPlayerDistance = 100000;
+			for (int32 enemyIndex = 0; enemyIndex < enemyAnimals.size(); enemyIndex++)
 			{
-				continue;
+				if (isTargetDecideds[enemyIndex])
+				{
+					continue;
+				}
+				double enemyToPlayerDistance = enemyAnimals[enemyIndex].getPos().distanceFrom(playerAnimals[playerIndex].getPos());
+				if (enemyToPlayerDistance < minEnemyToPlayerDistance)
+				{
+					minEnemyToPlayerDistance = enemyToPlayerDistance;
+					minDistanceEnemyIndex = enemyIndex;
+					//Print << minDistanceEnemyIndex;
+				}
 			}
-			double enemyToPlayerDistance = enemyAnimals[enemyIndex].getPos().distanceFrom(playerAnimals[playerIndex].getPos());
-			if (enemyToPlayerDistance < minEnemyToPlayerDistance)
-			{
-				minEnemyToPlayerDistance = enemyToPlayerDistance;
-				minDistanceEnemyIndex = enemyIndex;
-				//Print << minDistanceEnemyIndex;
-			}
-		}
-		isTargetDecideds[minDistanceEnemyIndex] = true;
+			isTargetDecideds[minDistanceEnemyIndex] = true;
 
-		const Vec2 direction = playerAnimals[playerIndex].getPos() - enemyAnimals[minDistanceEnemyIndex].getPos();
-		const Vec2 speed = 10 * direction.normalized();
-		enemyAnimals[minDistanceEnemyIndex].setVelocity(speed);
+			const Vec2 direction = playerAnimals[playerIndex].getPos() - enemyAnimals[minDistanceEnemyIndex].getPos();
+			const Vec2 speed = 10 * direction.normalized();
+			enemyAnimals[minDistanceEnemyIndex].setVelocity(speed);
+		}
 	}
 
 	// ボールと接触しているボディの ID を格納
@@ -299,13 +314,13 @@ void Game::update()
 				{
 					// ドラッグ中のプレイヤーが削除される場合は、ドラッグを中止します。
 					//if (const_cast<P2Body*>(&(*playerAnimalIt)) == const_cast<P2Body*>(&playerAnimals[grabAnimalIndex]))
-					if(playerAnimalIndex == grabAnimalIndex)
+					if (playerAnimalIndex == grabAnimalIndex)
 					{
 						isGrabbing = false;
 						grabAnimalIndex = 0;
 					}
 					// ドラッグ中のプレイヤーの番号よりも、削除されるプレイヤーの番号が小さい場合は、配列の番号の変更(-1)に対応します。
-					else if(playerAnimalIndex < grabAnimalIndex)
+					else if (playerAnimalIndex < grabAnimalIndex)
 					{
 						grabAnimalIndex--;
 					}
@@ -338,6 +353,14 @@ void Game::update()
 			}
 			goalAudio.playOneShot(0.5);
 			score += 100;
+
+			experiencePoint++;
+			if (experiencePoint >= level)
+			{
+				level++;
+				experiencePoint = 0;
+			}
+
 		}
 	}
 
@@ -359,6 +382,9 @@ void Game::update()
 
 void Game::draw() const
 {
+	textureGame.resized(1280).draw(0, 0);
+	textureGameMenu.resized(2300).draw(0, -13);
+
 	for (const auto& playerAnimal : playerAnimals)
 	{
 		playerAnimal.draw(Color{ 165, 105, 30 })
@@ -403,10 +429,17 @@ void Game::draw() const
 			.draw(enemyAnimal.getPos() - textureHammer.size() * 0.09 / 2);
 	}
 
-	for (const auto& wall : walls)
+	for (const auto& object : objects)
 	{
-		wall.draw(ColorF{ 0.0, 0.0, 0.0 });
+		object.draw(Color{ 144, 190, 14 })
+			.drawFrame(1, Color{ 0, 0, 0 });
+		textureRock.scaled(0.105).draw(object.getPos() - textureRock.size() * 0.105 / 2);
 	}
+
+	//for (const auto& wall : walls)
+	//{
+	//	wall.draw(ColorF{ 0.0, 0.0, 0.0 });
+	//}
 
 	if (isGrabbing)
 	{
@@ -420,15 +453,17 @@ void Game::draw() const
 		}
 	}
 
-	font(U"もぐら：{}"_fmt(playerHitPoint)).draw(50, 5, ColorF{ 1.0, 0.5, 0.0 });
-	font(U"レベル：{}"_fmt(0)).draw(450, 5, ColorF{ 1.0, 0.5, 0.0 });
-	font(U"スコア：{}"_fmt(score)).draw(850, 5, ColorF{ 1.0, 0.5, 0.0 });
+	font(U"もぐら：{}"_fmt(playerHitPoint)).draw(50, 5, ColorF{ 0.3, 0.25, 0.2 });
+	font(U"レベル：{}"_fmt(level)).draw(450, 5, ColorF{ 0.3, 0.25, 0.2 });
+	font(U"スコア：{}"_fmt(score)).draw(850, 5, ColorF{ 0.3, 0.25, 0.2 });
 	//double tmpPrecisionValue = Precision(spawnPlayerIntervalTimeMax - spawnPlayerTimer.sF(), 1);
 	double tmpPrecisionValue = std::round((spawnPlayerIntervalTimeMax - spawnPlayerTimer.sF()) * 10) / 10.0; // 小数点以下1桁までに制限
 	//font(U"PLAYER:{}"_fmt(tmpPrecisionValue)).draw(500, 5, ColorF{ 1.0, 0.5, 0.0 });
 	tmpPrecisionValue = std::round((spawnEnemyIntervalTimeMax - spawnEnemyTimer.sF()) * 10) / 10.0; // 小数点以下1桁までに制限
 
 	//font(U"ENEMY:{}"_fmt(tmpPrecisionValue)).draw(1000, 5, ColorF{ 1.0, 0.5, 0.0 });
+
+
 }
 
 P2Body* Game::findBodyFromID(P2BodyID id, const Array<P2Body>& bodyList)
