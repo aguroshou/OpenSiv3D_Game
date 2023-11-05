@@ -521,7 +521,7 @@ Vec2 Game::GetRandomPositionWithSafety(const Array<P2Body>& otherBodies) {
 	int32 retryCount = 0;
 	while (!isSafe) {
 		isSafe = true;
-		randomPosition = RandomVec2(1280, 640) + Vec2(0, 80);
+		randomPosition = RandomVec2(1240, 600) + Vec2(20, 100);
 		for (const P2Body otherBody : otherBodies) {
 			if (otherBody.getPos().distanceFrom(randomPosition) < radius) {
 				isSafe = false; // 他の座標と重なる
